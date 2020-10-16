@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>event_camera_depth_map</name>
+  <version>1.2.4</version>
+  <description>
+    event camera depth map.
+  </description>
+  <maintainer email="samuel_karlsson@outlook.com">Samuel Karlsson</maintainer>
+  <license>BSD</license>
+
+  <author>Samuel Karlsson</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>dvs_msgs</depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>catkin_simple</build_depend>
+  
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+</package>
