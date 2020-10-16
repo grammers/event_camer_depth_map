@@ -34,50 +34,64 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
     double py = sin(ref_pos[5]) * cos(ref_pos[4]);
     double pz = sin(ref_pos[4]);
 
-    int start_x = (int) (ref_pos[0] / 10);
-    int start_y = (int) (ref_pos[1] / 10);
-    int start_z = (int) (ref_pos[2] / 10);
+    int start_x = (int) (ref_pos[0] * 10);
+    int start_y = (int) (ref_pos[1] * 10);
+    int start_z = (int) (ref_pos[2] * 10);
     
-    if (px > 0){
-        for (int X = start_x + 1; X < dimX; X++){
-            double t = (X - ref_pos[0]) / px;
-            if (start_y + py * t >= dimY ||
-                start_y + py * t < 0 ||
-                start_z + pz * t >= dimZ ||
-                start_z + pz * t < 0){
-                break;
-                
-            }
-
-            grid[X + dimX * ( (int)(start_y + py * t) + dimY * (int)(start_z + pz * t) )]++;
+    int change = ray_direction(px);
+    for (int X = start_x + change; X < dimX; X++){
+        double t = (X - ref_pos[0]) / px;
+        if (add_hit(t, start_x, start_y, start_z, px, py, pz)){
+            break;
         }
     }
-    else {
-        for (int X = start_x - 1; X < dimX; X--){
-            double t = ray_hit(X, ref_pos[0], px);
-            if (in_bound(start_x, start_y, start_z, px, py, pz, t)){
-                brake;
-            }
 
-            grid[start_x + int (py * t) + dimX * ( (int)(start_y + py * t) + dimY * (int)(start_z + pz * t) )]++;
+    change = ray_direction(py);
+    for (int Y = start_y + change; Y < dimY; Y++){
+        double t = (Y - ref_pos[1]) / py;
+        if (add_hit(t, start_x, start_y, start_z, px, py, pz)){
+            break;
+        }
+    }
 
+    change = ray_direction(pz);
+    for (int Z = start_z + change; Z < dimZ; Z++){
+        double t = (Z - ref_pos[2]) / pz;
+        if (add_hit(t, start_x, start_y, start_z, px, py, pz)){
+            break;
+        }
     }
 
 }
 
-
-
-double Voxel::ray_hit(int plain, double pos, double delta){
-    return (plain - pos) / delta;
+int Voxel::ray_direction(double p){
+    if (p > 0) {
+        return 1;
+    return -1;
 }
 
-bool Voxel::in_bound(int x, int y, int z, double px, double py, double pz, double t){
-    if (x + py * t >= dimX ||
-        x + py * t < 0 ||
-        y + py * t >= dimY ||
-        y + py * t < 0 ||
-        z + pz * t >= dimZ ||
-        z + pz * t < 0){
+bool Voxel::add_hit(double t, int start_x, int start_y, int start_z,
+                        double px, double py, double pz){
+
+    int x = start_x + (int) (px * t);
+    int y = start_y + (int) (py * t);
+    int z = start_z + (int) (pz * t);
+
+    if (in_bound(x, y, z){
+        return false;
+    }
+    
+    grid[x + dimX * (y + dimY * z)]++;
+
+    return true;
+}
+
+
+bool Voxel::in_bound(int x, int y, int z){
+    if (x >= dimX || x < 0 ||
+        y >= dimY || y < 0 ||
+        z >= dimZ || z < 0){
+
         return false;
     }
     return true;

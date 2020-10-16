@@ -20,6 +20,11 @@ private:
 
     // accses (x, y, z) grid[x + dimX * (y + dimY * z)]
     std::vector<int> grid;
+    
+    int Voxel::ray_detection(double p);
+    bool add_hit(double t, int start_x, int start_y, int start_z, double px, double py, double pz);
+    double ray_hit(int plain, double pos, double delta);
+    bool in_bound(int x, int y, int z);
 
 };
 } //namespace
