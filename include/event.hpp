@@ -8,14 +8,15 @@ namespace EVENT{
 
 class Event{
 public:
-    Event(ODOM::Position p, GRID::Voxel *grid);
+    Event(ODOM::Position *p, GRID::Voxel *grid);
     void event_callback(const dvs_msgs::EventArray::ConstPtr& msg);
     void set_camera(double fx, double fy, double cx, double cy);
+    double get_f();
 
 private:
 
     GRID::Voxel* grid;
-    ODOM::Position pos;
+    ODOM::Position* pos;
     double f;
     double cx;
     double cy;

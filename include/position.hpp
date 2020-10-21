@@ -11,6 +11,7 @@ public:
     //Position(){};
     void odom_callback(const geometry_msgs::PoseStamped::ConstPtr& mag);
     double * pos_at(double ts);
+    double * get_current_pos();
 
 private:
     
@@ -18,6 +19,7 @@ private:
     double last_pos [6];
     double latest_pos_ts;
     double current_pos_ts;
+    double my_pos [6];
     
     double translation [6];
 
