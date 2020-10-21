@@ -4,6 +4,7 @@
 
 //for debug
 #include "ros/ros.h"
+#define resulution 100
 
 namespace GRID{
 
@@ -30,7 +31,7 @@ private:
     double ray_hit(int plain, double pos, double delta);
     bool in_bound(int x, int y, int z);
 
-    double distans(int *index);
+    double distans(int *index, double *ray);
     void hit_id(double t, double *ray, int *index);
     void setup(double *camera_pos, double *event_dir_vector, double *ray);
 

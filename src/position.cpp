@@ -15,11 +15,11 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     }
 
     // slider_depth has a non convential cordinat frame
-    //current_pos[0] = msg->pose.position.y;
-    //current_pos[1] = -msg->pose.position.x;
+    current_pos[0] = msg->pose.position.y;
+    current_pos[1] = -msg->pose.position.x;
 
-    current_pos[0] = msg->pose.position.x;
-    current_pos[1] = msg->pose.position.y;
+    //current_pos[0] = msg->pose.position.x;
+    //current_pos[1] = msg->pose.position.y;
     current_pos[2] = msg->pose.position.z;
     quaterions_euler(msg->pose.orientation.w, 
                     msg->pose.orientation.x, 

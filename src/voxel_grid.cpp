@@ -52,9 +52,6 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
     //ROS_INFO("param set upp");
 */
 
-    for(int i = 0; i < 3; i++){
-        cam_pos[i] *= 10;
-    }
     double ray [6];
     setup(cam_pos, event_dir, ray);
 
@@ -64,7 +61,7 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
 
     int change = ray_direction(ray[3]);
     //ROS_INFO("X %i", start_x + change);
-    for (int X = start_x + change; X < dimX && X >= 0; X += change){
+    for (int X = start_x + change * resulution / 4; X < dimX && X >= 0; X += change){
         //ROS_INFO("loop x %i", X);
         double t = (X - ray[0]) / ray[3];
         if (!add_hit(t, ray[0], ray[1], ray[2], ray[3], ray[4], ray[5])){
@@ -73,7 +70,7 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
     }
 
     change = ray_direction(ray[4]);
-    for (int Y = start_y + change; Y < dimY && Y >= 0; Y += change){
+    for (int Y = start_y + change * resulution / 4; Y < dimY && Y >= 0; Y += change){
         //ROS_INFO("loop y %i", Y);
         double t = (Y - ray[1]) / ray[4];
         if (!add_hit(t, ray[0], ray[1], ray[2], ray[3], ray[4], ray[5])){
@@ -82,7 +79,7 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
     }
 
     change = ray_direction(ray[5]);
-    for (int Z = start_z + change; Z < dimZ && Z >= 0; Z += change){
+    for (int Z = start_z + change * resulution / 4; Z < dimZ && Z >= 0; Z += change){
         //ROS_INFO("loop z %i", Z);
         double t = (Z - ray[2]) / ray[5];
         if (!add_hit(t, ray[0], ray[1], ray[2], ray[3], ray[4], ray[5])){
@@ -101,9 +98,9 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
 
 void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
     //ROS_INFO("in value %f %f", camera_pos[0], event_dir_vector[0]);
-    ray[0] = camera_pos[0] + init_pos[0];
-    ray[1] = camera_pos[1] + init_pos[1];
-    ray[2] = camera_pos[2] + init_pos[2];
+    ray[0] = camera_pos[0] * resulution + init_pos[0];
+    ray[1] = camera_pos[1] * resulution + init_pos[1];
+    ray[2] = camera_pos[2] * resulution + init_pos[2];
 
     double r0 = camera_pos[3] + init_pos[3];
     double p0 = camera_pos[4] + init_pos[4] + atan(event_dir_vector[1] / event_dir_vector[2]);
@@ -113,8 +110,9 @@ void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
     //ROS_INFO("pj %f %f", p0, j0);
 
     ray[3] = cos(j0) * cos(p0);
-    ray[4] = sin(j0) * cos(p0);
+    ray[4] = sin(j0) * cos(r0);
     ray[5] = sin(p0);
+    //ROS_INFO("changes %f %f %f", ray[3], ray[4], ray[5]);
 }
 
 int Voxel::ray_direction(double p){
@@ -162,19 +160,17 @@ bool Voxel::in_bound(int x, int y, int z){
                 
 }
 
-double Voxel::distans(int *index){
+double Voxel::distans(int *index, double *ray){
    // ROS_INFO("%i", grid[index[0] + dimX * (index[1] + dimY * index[2])]);
-    if (grid[index[0] + dimX * (index[1] + dimY * index[2])] > 3){
+    if (grid[index[0] + dimX * (index[1] + dimY * index[2])] > 750){
         //ROS_INFO("%f", sqrt(pow(index[0],2) + pow(index[1],2) + pow(index[2],2)));
-        return sqrt(pow(index[0],2) + pow(index[1],2) + pow(index[2],2));
+        return sqrt(pow(index[0] - ray[0],2) + pow(index[1] - ray[1],2) + pow(index[2] - ray[2],2));
     }
     return 0.0;
 }
 
 double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
-    for(int i = 0; i < 3; i++){
-        cam_pos[i] *= 10;
-    }
+    //ROS_INFO("norm pos %f", cam_pos[0]);
     /* 
     //ROS_INFO("read");
     for (int i = 0; i < grid.size(); i++){
@@ -197,19 +193,20 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     int index [3];
     int change = ray_direction(ray[3]);
     //ROS_INFO("wtf %i", start_x + change);
-    //ROS_INFO("delta %f", ray[3]);
-    for(int X = start_x + change; X < dimX && X >= 0; X += change){
+    //ROS_INFO("delta %f %f %f", ray[3], ray[4], ray[5]);
+    for(int X = start_x + change * 10; X < dimX && X >= 0; X += change){
         if (ray[3] == 0){
+            //ROS_INFO("is 0");
             break;
         }
         double t = (X - ray[0]) / ray[3];
         hit_id(t, ray, index);
-        ROS_INFO("hit id X %i %i %i", index[0], index[1], index[2]);
+        //ROS_INFO("hit id X %i %i %i", index[0], index[1], index[2]);
         if(!in_bound(index[0], index[1], index[2])){
             break;
         }
         //ROS_INFO("time for distans");
-        double distans_x = distans(index);
+        double distans_x = distans(index, ray);
         if (distans_x != 0.0){
             if (distans_x < min_dist){
                 min_dist = distans_x;
@@ -220,18 +217,19 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     }
 
     change = ray_direction(ray[4]);
-    for(int Y = start_y + change; Y < dimY && Y >= 0; Y += change){
+    for(int Y = start_y + change * 10; Y < dimY && Y >= 0; Y += change){
         if (ray[4] == 0){
             break;
         }
         double t = (Y - ray[1]) / ray[4];
         hit_id(t, ray, index);
-        ROS_INFO("hit id Y %i %i %i", index[0], index[1], index[2]);
+        //ROS_INFO("hit id Y %i %i %i", index[0], index[1], index[2]);
         if(!in_bound(index[0], index[1], index[2])){
             break;
         }
-        double distans_x = distans(index);
-        if (distans_x != 0){
+        //ROS_INFO("t f dist y");
+        double distans_x = distans(index, ray);
+        if (distans_x != 0.0){
             if (distans_x < min_dist){
                 min_dist = distans_x;
             }
@@ -241,18 +239,19 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     }
 
     change = ray_direction(ray[5]);
-    for(int Z = start_z + change; Z < dimZ && Z >= 0; Z += change){
+    for(int Z = start_z + change * 10; Z < dimZ && Z >= 0; Z += change){
         if (ray[5] == 0){
             break;
         }
-        double t = (Z - ray[3]) / ray[5];
+        double t = (Z - ray[2]) / ray[5];
         hit_id(t, ray, index);
-        ROS_INFO("hit id Z %i %i %i", index[0], index[1], index[2]);
+        //ROS_INFO("hit id Z %i %i %i", index[0], index[1], index[2]);
         if(!in_bound(index[0], index[1], index[2])){
             break;
         }
-        double distans_x = distans(index);
-        if (distans_x != 0){
+        //ROS_INFO("t f dist Z");
+        double distans_x = distans(index, ray);
+        if (distans_x != 0.0){
             if (distans_x < min_dist){
                 min_dist = distans_x;
             }

@@ -13,6 +13,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 //#define CV_8UC1 CV_MAKETYPE(CV_8U,1)
+#define resulution 100
 ros::Publisher depth_img_pub;
 
 int width = 350;
@@ -22,7 +23,7 @@ double ts_offset;
 
 ODOM::Position pos;
 //GRID::Voxel grid(10, 10, 10); 
-GRID::Voxel grid(100, 100, 100); // 1dm presition -> 5m eatch direction
+GRID::Voxel grid(300, 300, 300); // 1dm presition -> 5m eatch direction
 EVENT::Event event(&pos, &grid);
 
 void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
@@ -43,7 +44,7 @@ void depthMap(const ros::TimerEvent&){
 
     //pixel_vector[0] = 10.0;
     //pixel_vector[1] = 10.0;
-    pixel_vector[2] = event.get_f();
+    pixel_vector[2] = event.get_f() /2;
     //double pixle_value = grid.depth_at_pixel(camera_pos, pixel_vector);
     //ROS_INFO("new map");    
     cv::Mat image(height, width, CV_8UC1, cv::Scalar(10));
@@ -58,15 +59,15 @@ void depthMap(const ros::TimerEvent&){
                 
             double pixle_value = grid.depth_at_pixel(camera_pos, pixel_vector);
             
-            uchar color = (uchar) ((pixle_value / (100)) * 250 + 1);
+            uchar color = (uchar) (((pixle_value - 10)/ (20)) * 255);
             
             //row[x] = color;
             
-            if (pixle_value != 100.0){
+            if (pixle_value != 300.0){
                 //ROS_INFO("pixel value %f", pixle_value);
                 //ROS_INFO("color %i", color);
                 //ROS_INFO("cord %i %i", x, y);
-                ROS_INFO("vec %f %f", pixel_vector[0], pixel_vector[1]);
+                //ROS_INFO("vec %f %f", pixel_vector[0], pixel_vector[1]);
                 //ROS_INFO("size %i %i", width, height);
                 uchar& c = image.at<uchar>(y, x);
                 c = color;
