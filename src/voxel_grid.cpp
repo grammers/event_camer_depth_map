@@ -1,7 +1,7 @@
 #include <voxel_grid.hpp>
 
-#define THRES 500
-#define MIN_DIST 25
+#define THRES 200
+#define MIN_DIST 30
 
 namespace GRID{
 

@@ -13,7 +13,6 @@
 #include "opencv2/highgui/highgui.hpp"
 
 //#define CV_8UC1 CV_MAKETYPE(CV_8U,1)
-#define resulution 100
 ros::Publisher depth_img_pub;
 
 int width = 350;
@@ -23,7 +22,7 @@ double ts_offset;
 
 ODOM::Position pos;
 //GRID::Voxel grid(10, 10, 10); 
-GRID::Voxel grid(300, 300, 300); // 1dm presition -> 5m eatch direction
+GRID::Voxel grid(300, 300, 300); 
 EVENT::Event event(&pos, &grid);
 
 void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
@@ -47,9 +46,12 @@ void depthMap(const ros::TimerEvent&){
     pixel_vector[2] = event.get_f() /2;
     //double pixle_value = grid.depth_at_pixel(camera_pos, pixel_vector);
     //ROS_INFO("new map");    
-    cv::Mat image(height, width, CV_8UC1, cv::Scalar(10));
+    cv::Mat image(height, width, CV_8UC1, cv::Scalar(1));
 
     //ROS_INFO("loop");
+    
+    double min = 1000;
+    double max = 0;
     for(int y=0; y < height; y++){
         //uchar* row = image.ptr<uchar>(y);
         for(int x = 0; x < width; x++){
@@ -59,11 +61,13 @@ void depthMap(const ros::TimerEvent&){
                 
             double pixle_value = grid.depth_at_pixel(camera_pos, pixel_vector);
             
-            uchar color = (uchar) (((pixle_value - 22)/ (10)) * 255);
+            uchar color = (uchar) (((pixle_value - 30)/ (20)) * 255);
             
             //row[x] = color;
             
             if (pixle_value != 300.0){
+                if (pixle_value < min){ min = pixle_value;}
+                if (pixle_value > max){ max = pixle_value;}
                 //ROS_INFO("pixel value %f", pixle_value);
                 //ROS_INFO("color %i", color);
                 //ROS_INFO("cord %i %i", x, y);
@@ -78,6 +82,8 @@ void depthMap(const ros::TimerEvent&){
             //ROS_INFO("color new %i", r);
         }
     }
+
+    ROS_INFO("min max %f %f", min, max);
 
     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", image).toImageMsg();
     depth_img_pub.publish(msg);
@@ -97,7 +103,7 @@ int main(int argc, char **argv){
 
     ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
 
-    ros::Timer timer = n.createTimer(ros::Duration(0.5), depthMap);
+    ros::Timer timer = n.createTimer(ros::Duration(1.0), depthMap);
     //image_transport::ImageTransport it(n);
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
 

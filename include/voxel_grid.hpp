@@ -4,7 +4,7 @@
 
 //for debug
 #include "ros/ros.h"
-#define resulution 100
+#define resulution 50
 
 namespace GRID{
 
