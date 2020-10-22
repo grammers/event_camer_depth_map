@@ -1,14 +1,14 @@
 #include <voxel_grid.hpp>
 
-#define THRES 200
-#define MIN_DIST 30
+#define THRES 7
+#define MIN_DIST 10
 
 namespace GRID{
 
 Voxel::Voxel(int dimX, int dimY, int dimZ){
-    this->dimX = dimX;
-    this->dimY = dimY;
-    this->dimZ = dimZ;
+    //this->dimX = dimX;
+    //this->dimY = dimY;
+    //this->dimZ = dimZ;
 
     dim[0] = dimX;
     dim[1] = dimY;
@@ -104,6 +104,17 @@ bool Voxel::in_bound(int *index){
                 
 }
 
+
+bool Voxel::is_marked(int x, int y, int z){
+    //ROS_INFO("where %i",grid[x + dim[0] * (y + dim[1] * z)]);
+    if (grid[x + dim[0] * (y + dim[1] * z)] > THRES){
+        return true;
+    }
+    return false;
+}
+
+
+
 double Voxel::distans(int *index, double *ray){
    // ROS_INFO("%i", grid[index[0] + dimX * (index[1] + dimY * index[2])]);
     if (grid[index[0] + dim[0] * (index[1] + dim[1] * index[2])] > THRES){
@@ -112,6 +123,7 @@ double Voxel::distans(int *index, double *ray){
     }
     return 0.0;
 }
+
 
 double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     //ROS_INFO("norm pos %f", cam_pos[0]);
@@ -158,77 +170,6 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
         }
 
     }
-/*
-    int index [3];
-    int change = ray_direction(ray[3]);
-    //ROS_INFO("wtf %i", start_x + change);
-    //ROS_INFO("delta %f %f %f", ray[3], ray[4], ray[5]);
-    for(int X = start_x + change * 10; X < dimX && X >= 0; X += change){
-        if (ray[3] == 0){
-            //ROS_INFO("is 0");
-            break;
-        }
-        double t = (X - ray[0]) / ray[3];
-        hit_id(t, ray, index);
-        //ROS_INFO("hit id X %i %i %i", index[0], index[1], index[2]);
-        if(!in_bound(index)){
-            break;
-        }
-        //ROS_INFO("time for distans");
-        double distans_x = distans(index, ray);
-        if (distans_x != 0.0){
-            if (distans_x < min_dist){
-                min_dist = distans_x;
-            }
-            break;
-        }
-        
-    }
-
-    change = ray_direction(ray[4]);
-    for(int Y = start_y + change * 10; Y < dimY && Y >= 0; Y += change){
-        if (ray[4] == 0){
-            break;
-        }
-        double t = (Y - ray[1]) / ray[4];
-        hit_id(t, ray, index);
-        //ROS_INFO("hit id Y %i %i %i", index[0], index[1], index[2]);
-        if(!in_bound(index)){
-            break;
-        }
-        //ROS_INFO("t f dist y");
-        double distans_x = distans(index, ray);
-        if (distans_x != 0.0){
-            if (distans_x < min_dist){
-                min_dist = distans_x;
-            }
-            break;
-        }
-        
-    }
-
-    change = ray_direction(ray[5]);
-    for(int Z = start_z + change * 10; Z < dimZ && Z >= 0; Z += change){
-        if (ray[5] == 0){
-            break;
-        }
-        double t = (Z - ray[2]) / ray[5];
-        hit_id(t, ray, index);
-        //ROS_INFO("hit id Z %i %i %i", index[0], index[1], index[2]);
-        if(!in_bound(index)){
-            break;
-        }
-        //ROS_INFO("t f dist Z");
-        double distans_x = distans(index, ray);
-        if (distans_x != 0.0){
-            if (distans_x < min_dist){
-                min_dist = distans_x;
-            }
-            break;
-        }
-        
-    }
-*/
     return min_dist;
 }
 

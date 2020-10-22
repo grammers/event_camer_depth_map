@@ -8,7 +8,7 @@ Event::Event(ODOM::Position *p, GRID::Voxel *grid) {
 }
 
 void Event::event_callback(const dvs_msgs::EventArray::ConstPtr& msg){
-    //ROS_INFO("event");
+    ROS_INFO("event");
     int size = msg->events.size();
     for (int i = 0;  i < size; i++){
         const dvs_msgs::Event& e = msg->events[i];
