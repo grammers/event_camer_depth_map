@@ -59,7 +59,7 @@ void depthMap(const ros::TimerEvent&){
                 
             double pixle_value = grid.depth_at_pixel(camera_pos, pixel_vector);
             
-            uchar color = (uchar) (((pixle_value - 10)/ (20)) * 255);
+            uchar color = (uchar) (((pixle_value - 22)/ (10)) * 255);
             
             //row[x] = color;
             

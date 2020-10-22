@@ -20,16 +20,16 @@ private:
     int dimX;
     int dimY;
     int dimZ;
-
+    int dim[3];
     double init_pos [6];
 
     // accses (x, y, z) grid[x + dimX * (y + dimY * z)]
     std::vector<int> grid;
     
     int ray_direction(double p);
-    bool add_hit(double t, int start_x, int start_y, int start_z, double px, double py, double pz);
+    bool add_hit(double t, double *ray);
     double ray_hit(int plain, double pos, double delta);
-    bool in_bound(int x, int y, int z);
+    bool in_bound(int *index);
 
     double distans(int *index, double *ray);
     void hit_id(double t, double *ray, int *index);
