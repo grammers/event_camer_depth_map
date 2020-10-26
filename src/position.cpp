@@ -2,10 +2,11 @@
 #include <iostream>
 
 namespace ODOM{
-//Position::Position(){
-//    std::cout<<"position"<<std::endl;
-//    ROS_INFO("POSITION ");
-//}
+Position::Position(ros::Publisher *odom){
+   this->odom = odom; 
+   //quaterions_euler(0.8775826, 0.4794255, 0.0, 0.0);
+   //ROS_INFO("rpj %f %f %f", current_pos[3], current_pos[4], current_pos[5]);
+}
 
 
 void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
@@ -15,12 +16,13 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     }
 
     // slider_depth has a non convential cordinat frame
-    current_pos[0] = msg->pose.position.y;
+    current_pos[0] = msg->pose.position.z;
     current_pos[1] = -msg->pose.position.x;
+    current_pos[2] = -msg->pose.position.y;
 
     //current_pos[0] = msg->pose.position.x;
     //current_pos[1] = msg->pose.position.y;
-    current_pos[2] = msg->pose.position.z;
+    //current_pos[2] = msg->pose.position.z;
     quaterions_euler(msg->pose.orientation.w, 
                     msg->pose.orientation.x, 
                     msg->pose.orientation.y, 
@@ -29,26 +31,52 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     current_pos_ts = msg->header.stamp.toSec();
     translation_calk();
 
-    ROS_INFO("ocom_callback %f", current_pos[1]);
+    //ROS_INFO("quartileon %f %f %f %f", msg->pose.orientation.w, msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z);
+    //ROS_INFO("ocom_callback %f %f %f %f %f %f", current_pos[0], current_pos[1], current_pos[2], current_pos[3], current_pos[4], current_pos[5]);
+    
+    geometry_msgs::PoseStamped track = *msg;
+    track.header.frame_id = "map";
+    odom->publish(track);
 }
 
 void Position::quaterions_euler(double w, double x, double y, double z){
-    double sinr_cosp = 2 * (w * x + y * z);
-    double cosr_cosp = 1 - 1 * (x * x + y * y);
-    current_pos[3] = std::atan2(sinr_cosp, cosr_cosp);
+    double test = x * y + z * w;
+    double norm = pow(w,2) + pow(x,2) + pow(y,2) + pow(z,2);
+    if (test > 0.499 * norm)
+    {
+        current_pos[4] = -0;
+        current_pos[5] = -4.1415 / 2;
+        current_pos[3] = 2 * std::atan2(x,w);
+    }
+    else if (test < -0.499 * norm){
+        current_pos[4] = -0;
+        current_pos[5] = 4.1415 / 2;
+        current_pos[3] = -2 * std::atan2(x,w);
+    }
+    else {
+        double sinr_cosp = 2 * (w * x - y * z);
+        double cosr_cosp =(y * y - x * x - z * z + w * w);
+        current_pos[4] = -std::atan2(sinr_cosp, cosr_cosp);
 
-    double sinp = 2 * (w * y + z * x);
+        current_pos[5] = -std::asin(2 * test / norm);        
+        
+        current_pos[3] = std::atan2(2 * (y * w - x * z), pow(x,2) - pow(y,2) - pow(z,2) + pow(w,2)); 
+        
+    }
+    /*
+    double sinp = 2 * (w * y - z * x);
     if (std::abs(sinp >= 1)){
         current_pos[4] = std::copysign(3.1415 / 2, sinp);
     }
     else {
         current_pos[4] = std::asin(sinp);
     }
-
+    */
+    /*
     double siny_cosp = 2 * (w * z + x * y);
     double cosy_cosp = 1 - 2 * (y * y + z * z);
     current_pos[5] = std::atan2(siny_cosp, cosy_cosp);
-
+    */
     
     return;
 }

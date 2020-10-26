@@ -15,9 +15,9 @@ void Event::event_callback(const dvs_msgs::EventArray::ConstPtr& msg){
         double* event_pos = pos->pos_at(e.ts.toSec());
         double event_pos_camera [3];
 
-        event_pos_camera[0] = e.x - cx; // widht
-        event_pos_camera[1] = e.y - cy; // height
-        event_pos_camera[2] = f; // depth
+        event_pos_camera[1] = -e.x + cx; // widht
+        event_pos_camera[2] = -e.y + cy; // height
+        event_pos_camera[0] = f; // depth
 
         //ROS_INFO("event %f %f %f", event_pos[0], event_pos[1], event_pos[2]);
         grid->add_ray(event_pos, event_pos_camera);

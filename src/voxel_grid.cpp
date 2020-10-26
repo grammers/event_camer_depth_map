@@ -1,7 +1,7 @@
 #include <voxel_grid.hpp>
 
-#define THRES 7
-#define MIN_DIST 10
+#define THRES 5
+#define MIN_DIST 1
 
 namespace GRID{
 
@@ -35,9 +35,9 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
 
     for (int i = 0; i < 3; i++){
         int change = ray_direction(ray[i + 3]);
-        //ROS_INFO("X %i", start_x + change);
+        //ROS_INFO("X %f %i %i", ray[i], change,  MIN_DIST);
         for (int plain = (int)ray[i] + change * MIN_DIST; plain < dim[i] && plain >= 0; plain += change){
-            //ROS_INFO("loop x %i", X);
+            //ROS_INFO("loop x %i", plain);
             double t = (plain - ray[i]) / ray[i + 3];
             if (!add_hit(t, ray)){
                 break;
@@ -48,10 +48,26 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
 
 void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
     //ROS_INFO("in value %f %f", camera_pos[0], event_dir_vector[0]);
+    double r = camera_pos[4];
+    double p = camera_pos[5];
+    double y = camera_pos[6];
+
+
     ray[0] = camera_pos[0] * resulution + init_pos[0];
     ray[1] = camera_pos[1] * resulution + init_pos[1];
     ray[2] = camera_pos[2] * resulution + init_pos[2];
 
+    ray[3] = event_dir_vector[0] * cos(p) * cos(y) 
+            - event_dir_vector[1] * cos(p) * sin(y) 
+            + event_dir_vector[2] * cos(p);
+    ray[4] = event_dir_vector[0] * (sin(r) * sin(p) * cos(y) + cos(r) * sin(y)) 
+            - event_dir_vector[1] * (sin(r) * sin(p) * sin(y) + cos(r) * cos(y)) 
+            - event_dir_vector[2] * sin(r) * sin(p);
+    ray[5] = event_dir_vector[0] * (cos(r) * sin(p) * cos(y) + sin(r) * cos(y))
+            + event_dir_vector[1] * (cos(r) * sin(p) * sin(y) + sin(r) * cos(y))
+            + event_dir_vector[2] * cos(r) * cos(p);
+
+/*
     double r0 = camera_pos[3] + init_pos[3];
     double p0 = camera_pos[4] + init_pos[4] + atan(event_dir_vector[1] / event_dir_vector[2]);
    // double j0 = camera_pos[5] + init_pos[5] + acos(event_dir_vector[2] / sqrt(pow(event_dir_vector[0],2) + pow(event_dir_vector[1],2) + pow(event_dir_vector[2],2)));
@@ -63,6 +79,7 @@ void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
     ray[4] = sin(j0) * cos(r0);
     ray[5] = sin(p0);
     //ROS_INFO("changes %f %f %f", ray[3], ray[4], ray[5]);
+*/
 }
 
 int Voxel::ray_direction(double p){
@@ -77,13 +94,13 @@ bool Voxel::add_hit(double t, double *ray){
     hit_id(t, ray, index);
 
     if (!in_bound(index)){
-        //ROS_INFO("out of bound %i %i %i", x, y, z);
+        //ROS_INFO("out of bound %i %i %i", index[0], index[1], index[2]);
         return false;
     }
     
     //ROS_INFO("time to add %i %i %i", x, y, z);
     grid[index[0] + dim[0] * (index[1] + dim[1] * index[2])]++;
-    //ROS_INFO("++ %i", grid[x + dimX * (y + dimY *z)]);
+    //ROS_INFO("++ %i", grid[index[0] + dim[0] * (index[1] + dim[1] * index[2])]);
 
     return true;
 }

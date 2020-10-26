@@ -20,6 +20,8 @@
   <build_depend>catkin_simple</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>visualization_msgs</build_depend>
+  <build_depend>rviz_visual_tools</build_depend>
+
   
   <exec_depend>roscpp</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>

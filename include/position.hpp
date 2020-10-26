@@ -8,12 +8,13 @@ namespace ODOM{
 
 class Position{
 public:
-    //Position(){};
+    Position(ros::Publisher *odom);
     void odom_callback(const geometry_msgs::PoseStamped::ConstPtr& mag);
     double * pos_at(double ts);
     double * get_current_pos();
 
 private:
+    ros::Publisher* odom;
     
     double current_pos [6];
     double last_pos [6];

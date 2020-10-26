@@ -11,9 +11,13 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <rviz_visual_tools/rviz_visual_tools.h>
 
 //#define CV_8UC1 CV_MAKETYPE(CV_8U,1)
 ros::Publisher marker_pub;
+
+ros::Publisher odom;
+visualization_msgs::MarkerArray marker_array;
 
 const int DIMX = 300;
 const int DIMY = 300;
@@ -23,15 +27,17 @@ int width = 350;
 int height = 350;
 
 int id = 0;
+int size = 0;
 double ts_offset;
 
-ODOM::Position pos;
+ODOM::Position pos(&odom);
 //GRID::Voxel grid(10, 10, 10); 
 GRID::Voxel grid(DIMX, DIMY, DIMZ); 
 EVENT::Event event(&pos, &grid);
 
 
-void add_marker(visualization_msgs::MarkerArray *marker_array, int x, int y, int z){
+//void add_marker(visualization_msgs::MarkerArray *marker_array, int x, int y, int z){
+void add_marker(int x, int y, int z){
     if (grid.is_marked(x, y, z)){
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
@@ -49,25 +55,34 @@ void add_marker(visualization_msgs::MarkerArray *marker_array, int x, int y, int
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
         marker.scale.x = 1;
-        marker.scale.y = 1;
-        marker.scale.z = 1;
+        marker.scale.y = 1.0;
+        marker.scale.z = 1.0;
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 0.0;
         marker.color.g = 1.0;
         marker.color.b = 0.0;
         ROS_INFO("MARKER %i %i %i", x ,y ,z);
-        marker_array->markers.push_back(marker);
+        marker_array.markers.push_back(marker);
+        size++;
     }
 
 }
 
 void marker(const ros::TimerEvent&){
-    visualization_msgs::MarkerArray marker_array;
-    ROS_INFO("WHER");
+    //rviz_visual_tools::RvizVisualTools rviz();
+    //rviz->deleteAllMarkers();
+    //ROS_INFO("WHER");
+    for (int i = 0; i < marker_array.markers.size(); i++){
+        marker_array.markers[i].header.stamp = ros::Time();
+        marker_array.markers[i].action = 2;
+    }
+    //marker_pub.publish(marker_array);
+    marker_array.markers.empty();
+    size = 0;
     for (int x = 0; x < DIMX; x++){ 
         for (int y = 0; y < DIMY; y++){
             for (int z = 0; z < DIMZ; z++){
-                add_marker(&marker_array, x, y, z);
+                add_marker(x, y, z);
             }
         }
     }
@@ -92,6 +107,7 @@ int main(int argc, char **argv){
     ros::Subscriber camera_info_sub = n.subscribe("/dvs/camera_info", 1, cam_callback);
 
     ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, &ODOM::Position::odom_callback, &pos);
+    odom = n.advertise<geometry_msgs::PoseStamped>("/optitrack/map",10);
 
     ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
 
