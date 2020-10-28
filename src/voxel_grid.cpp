@@ -1,7 +1,7 @@
 #include <voxel_grid.hpp>
 
-#define THRES 5
-#define MIN_DIST 1
+#define THRES 0.7 //10000 //4500 //10000
+#define MIN_DIST 16
 
 namespace GRID{
 
@@ -47,16 +47,30 @@ void Voxel::add_ray(double *cam_pos, double *event_dir){
 }
 
 void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
-    //ROS_INFO("in value %f %f", camera_pos[0], event_dir_vector[0]);
-    double r = camera_pos[4];
-    double p = camera_pos[5];
-    double y = camera_pos[6];
+    //ROS_INFO("in value %f %f", camera_pos[0], init_pos[0]);
+    double i = camera_pos[3];
+    double j = camera_pos[4];
+    double k = camera_pos[5];
+    double r = camera_pos[6];
 
 
     ray[0] = camera_pos[0] * resulution + init_pos[0];
     ray[1] = camera_pos[1] * resulution + init_pos[1];
     ray[2] = camera_pos[2] * resulution + init_pos[2];
+    
+    // quart rot
+    ray[3] = event_dir_vector[0] * (1 - 2 * pow(j,2) - 2 * pow(k,2))
+             + event_dir_vector[1] * 2 * (i * j - k * r)
+             + event_dir_vector[2] * 2 * (i * k + j *r);
+    ray[4] = event_dir_vector[0] * 2 * (i * j + k * r)
+             + event_dir_vector[1] * (1 - 2 * pow(i,2) - 2 * pow(k,2))
+             + event_dir_vector[2] * 2 * (j * k - i * r);
+    ray[5] = event_dir_vector[0] * 2 * (i * k - j * r)
+             + event_dir_vector[1] * 2 * (i * r + j * k)
+             + event_dir_vector[2] * (1 - 2 * pow(i,2) - 2 * pow(j,2));
 
+/*
+    //euiler rot
     ray[3] = event_dir_vector[0] * cos(p) * cos(y) 
             - event_dir_vector[1] * cos(p) * sin(y) 
             + event_dir_vector[2] * cos(p);
@@ -67,6 +81,7 @@ void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
             + event_dir_vector[1] * (cos(r) * sin(p) * sin(y) + sin(r) * cos(y))
             + event_dir_vector[2] * cos(r) * cos(p);
 
+*/
 /*
     double r0 = camera_pos[3] + init_pos[3];
     double p0 = camera_pos[4] + init_pos[4] + atan(event_dir_vector[1] / event_dir_vector[2]);
@@ -78,8 +93,9 @@ void Voxel::setup(double *camera_pos, double *event_dir_vector, double *ray){
     ray[3] = cos(j0) * cos(p0);
     ray[4] = sin(j0) * cos(r0);
     ray[5] = sin(p0);
-    //ROS_INFO("changes %f %f %f", ray[3], ray[4], ray[5]);
 */
+    //ROS_INFO("changes %f %f %f", ray[3], ray[4], ray[5]);
+    //ROS_INFO("pos %f %f %f", ray[0], ray[1], ray[2]);
 }
 
 int Voxel::ray_direction(double p){
@@ -121,10 +137,22 @@ bool Voxel::in_bound(int *index){
                 
 }
 
+void Voxel::normalise(){
+    max_ray = 0;
+    int size = grid.size();
+    for (int i = 0; i < size; i++){
+        if (grid[i] > max_ray) { max_ray = grid[i];}
+    }
+}
+
+int Voxel::nr_ray(int x, int y, int z){
+    return grid[x + dim[0] * (y + dim[1] * z)];
+}
+
 
 bool Voxel::is_marked(int x, int y, int z){
     //ROS_INFO("where %i",grid[x + dim[0] * (y + dim[1] * z)]);
-    if (grid[x + dim[0] * (y + dim[1] * z)] > THRES){
+    if (((double) grid[x + dim[0] * (y + dim[1] * z)] / (double) max_ray) > THRES){
         return true;
     }
     return false;

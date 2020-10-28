@@ -4,12 +4,14 @@
 namespace ODOM{
 Position::Position(ros::Publisher *odom){
    this->odom = odom; 
+   first = false;
    //quaterions_euler(0.8775826, 0.4794255, 0.0, 0.0);
    //ROS_INFO("rpj %f %f %f", current_pos[3], current_pos[4], current_pos[5]);
 }
 
 
 void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+
     latest_pos_ts = current_pos_ts;
     for(int i = 0; i < 6; i++){
         last_pos[i] = current_pos[i];
@@ -28,6 +30,25 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
                     msg->pose.orientation.y, 
                     msg->pose.orientation.z);
     
+    quart[0] = msg->pose.position.x;
+    quart[1] = msg->pose.position.y;
+    quart[2] = msg->pose.position.z;
+    quart[3] = msg->pose.orientation.x;
+    quart[4] = msg->pose.orientation.y;
+    quart[5] = msg->pose.orientation.z;
+    quart[6] = msg->pose.orientation.w;
+
+    if (!first){
+        for(int i = 0; i < 3; i++){
+            first_pos[i] = quart[i];
+        }
+        first = true;
+    }
+    for(int i = 0; i < 3; i++){
+        current_pos[i] -= first_pos[i];
+        quart[i] -= first_pos[i];
+        
+    }
     current_pos_ts = msg->header.stamp.toSec();
     translation_calk();
 
@@ -36,7 +57,13 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     
     geometry_msgs::PoseStamped track = *msg;
     track.header.frame_id = "map";
+    track.pose.position.x = quart[0] * 10 + 15;
+    track.pose.position.y = quart[1] * 10 + 15;
+    track.pose.position.z = quart[2] * 10 + 15;
     odom->publish(track);
+
+
+    //ROS_INFO("ocom_callback %f %f %f %f %f %f", quart[0], quart[1], quart[2], quart[3], quart[4], quart[5]);
 }
 
 void Position::quaterions_euler(double w, double x, double y, double z){
@@ -92,10 +119,12 @@ void Position::translation_calk(){
 }
 
 double * Position::get_current_pos(){
-    return current_pos;
+    return quart;
+    //return current_pos;
 }
 
 double * Position::pos_at(double ts){
+    return quart;
     double offset = ts - current_pos_ts;
 
     for (int i = 0; i < 6; i++){

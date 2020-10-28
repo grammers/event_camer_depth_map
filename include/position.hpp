@@ -17,12 +17,16 @@ private:
     ros::Publisher* odom;
     
     double current_pos [6];
+    double quart [7];
     double last_pos [6];
+    double first_pos [6];
     double latest_pos_ts;
     double current_pos_ts;
     double my_pos [6];
     
     double translation [6];
+
+    bool first;
 
     void quaterions_euler(double w, double x, double y, double z);
     void translation_calk();

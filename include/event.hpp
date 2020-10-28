@@ -18,6 +18,8 @@ private:
     GRID::Voxel* grid;
     ODOM::Position* pos;
     double f;
+    double fx;
+    double fy;
     double cx;
     double cy;
 

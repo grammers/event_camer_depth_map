@@ -19,9 +19,9 @@ ros::Publisher marker_pub;
 ros::Publisher odom;
 visualization_msgs::MarkerArray marker_array;
 
-const int DIMX = 300;
-const int DIMY = 300;
-const int DIMZ = 300;
+const int DIMX = 100;
+const int DIMY = 100;
+const int DIMZ = 100;
 
 int width = 350;
 int height = 350;
@@ -54,18 +54,57 @@ void add_marker(int x, int y, int z){
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
-        marker.scale.x = 1;
+        marker.scale.x = 1.0;
         marker.scale.y = 1.0;
         marker.scale.z = 1.0;
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 0.0;
         marker.color.g = 1.0;
         marker.color.b = 0.0;
-        ROS_INFO("MARKER %i %i %i", x ,y ,z);
+        //ROS_INFO("MARKER %i %i %i", x ,y ,z);
         marker_array.markers.push_back(marker);
         size++;
     }
 
+}
+
+void add_2d_marker(int x, int y){
+    int max = 0;
+    int Z = 0;
+    for (int z = 0; z < DIMZ; z++){
+        if (grid.nr_ray(x, y, z) > max){
+            max = grid.nr_ray(x, y, z);
+            Z = z;
+        }
+    }
+    if (max > 1000){
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.ns = "my_namespace";
+        marker.id = id;
+        id++;
+        marker.type = visualization_msgs::Marker::CUBE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = x;
+        marker.pose.position.y = y;
+        marker.pose.position.z = Z;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 1.0;
+        marker.scale.y = 1.0;
+        marker.scale.z = 1.0;
+        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        //ROS_INFO("MARKER %i %i %i", x ,y ,z);
+        marker_array.markers.push_back(marker);
+        size++;
+
+    }
 }
 
 void marker(const ros::TimerEvent&){
@@ -78,9 +117,13 @@ void marker(const ros::TimerEvent&){
     }
     //marker_pub.publish(marker_array);
     marker_array.markers.empty();
+    
+    grid.normalise();
+
     size = 0;
     for (int x = 0; x < DIMX; x++){ 
         for (int y = 0; y < DIMY; y++){
+            //add_2d_marker(x, y);
             for (int z = 0; z < DIMZ; z++){
                 add_marker(x, y, z);
             }
@@ -112,7 +155,7 @@ int main(int argc, char **argv){
     ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
 
     marker_pub = n.advertise<visualization_msgs::MarkerArray>( "/visualization_marker", 0 );
-    ros::Timer timer = n.createTimer(ros::Duration(1.2), marker);
+    ros::Timer timer = n.createTimer(ros::Duration(1.5), marker);
 
 
     while(ros::ok()){

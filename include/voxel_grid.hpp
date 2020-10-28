@@ -4,7 +4,7 @@
 
 //for debug
 #include "ros/ros.h"
-#define resulution 100
+#define resulution 33
 
 namespace GRID{
 
@@ -16,6 +16,8 @@ public:
     double depth_at_pixel(double *cam_pos, double *pixel_vector);
 
     bool is_marked(int x, int y, int z);
+    void normalise();
+    int nr_ray(int x, int y, int z);
 private:
 
     int dimX;
@@ -27,6 +29,7 @@ private:
     // accses (x, y, z) grid[x + dimX * (y + dimY * z)]
     std::vector<int> grid;
     //std::vector<bool> marker;
+    int max_ray;
     
     int ray_direction(double p);
     bool add_hit(double t, double *ray);
