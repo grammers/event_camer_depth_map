@@ -68,13 +68,45 @@ void add_marker(int x, int y, int z){
 
 }
 
-void add_2d_marker(int x, int y){
+void addaptiv(int z, int y){
+    int x = grid.filtered_mark(z, y);
+    if (x > 0){
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.ns = "my_namespace";
+        marker.id = id;
+        id++;
+        marker.type = visualization_msgs::Marker::CUBE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = x;
+        marker.pose.position.y = y;
+        marker.pose.position.z = z;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 1.0;
+        marker.scale.y = 1.0;
+        marker.scale.z = 1.0;
+        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        //ROS_INFO("MARKER %i %i %i", x ,y ,z);
+        marker_array.markers.push_back(marker);
+        size++;
+    }
+
+}
+
+void add_2d_marker(int z, int y){
     int max = 0;
-    int Z = 0;
-    for (int z = 0; z < DIMZ; z++){
+    int X = 0;
+    for (int x = 0; x < DIMX; x++){
         if (grid.nr_ray(x, y, z) > max){
             max = grid.nr_ray(x, y, z);
-            Z = z;
+            X = x;
         }
     }
     if (max > 1000){
@@ -86,9 +118,9 @@ void add_2d_marker(int x, int y){
         id++;
         marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = x;
+        marker.pose.position.x = X;
         marker.pose.position.y = y;
-        marker.pose.position.z = Z;
+        marker.pose.position.z = z;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
@@ -118,15 +150,16 @@ void marker(const ros::TimerEvent&){
     //marker_pub.publish(marker_array);
     marker_array.markers.empty();
     
-    grid.normalise();
-
+    //grid.normalise();
+    grid.filter();
     size = 0;
     for (int x = 0; x < DIMX; x++){ 
         for (int y = 0; y < DIMY; y++){
+            addaptiv(x, y);
             //add_2d_marker(x, y);
-            for (int z = 0; z < DIMZ; z++){
-                add_marker(x, y, z);
-            }
+            //for (int z = 0; z < DIMZ; z++){
+            //    add_marker(x, y, z);
+            //}
         }
     }
     //ROS_INFO("re pub");

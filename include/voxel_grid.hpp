@@ -1,6 +1,7 @@
 #pragma once 
 #include <vector> 
 #include <cmath>
+#include <opencv2/imgproc.hpp>
 
 //for debug
 #include "ros/ros.h"
@@ -18,6 +19,9 @@ public:
     bool is_marked(int x, int y, int z);
     void normalise();
     int nr_ray(int x, int y, int z);
+
+    void filter();
+    int filtered_mark(int x, int y);
 private:
 
     int dimX;
@@ -35,6 +39,12 @@ private:
     bool add_hit(double t, double *ray);
     double ray_hit(int plain, double pos, double delta);
     bool in_bound(int *index);
+
+    //filering stuf
+    cv::Mat max;
+    cv::Mat max_coordinates;
+    cv::Mat max_filtered_coordinates;
+    cv::Mat mask;
 
 
     double distans(int *index, double *ray);

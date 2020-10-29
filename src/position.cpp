@@ -33,9 +33,9 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     quart[0] = msg->pose.position.x;
     quart[1] = msg->pose.position.y;
     quart[2] = msg->pose.position.z;
-    quart[3] = msg->pose.orientation.x;
-    quart[4] = msg->pose.orientation.y;
-    quart[5] = msg->pose.orientation.z;
+    quart[3] = msg->pose.orientation.z;
+    quart[4] = -msg->pose.orientation.x;
+    quart[5] = -msg->pose.orientation.y;
     quart[6] = msg->pose.orientation.w;
 
     if (!first){
@@ -57,9 +57,20 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     
     geometry_msgs::PoseStamped track = *msg;
     track.header.frame_id = "map";
-    track.pose.position.x = quart[0] * 10 + 15;
-    track.pose.position.y = quart[1] * 10 + 15;
-    track.pose.position.z = quart[2] * 10 + 15;
+    track.pose.position.x = quart[0];// * 10 + 15;
+    track.pose.position.y = quart[1];// * 10 + 15;
+    track.pose.position.z = quart[2];// * 10 + 15;
+    track.pose.orientation.x = quart[3];
+    track.pose.orientation.y = quart[4];
+    track.pose.orientation.z = quart[5];
+    track.pose.orientation.w = quart[6];
+    //track.pose.position.x = 0;// * 10 + 15;
+    //track.pose.position.y = 0;// * 10 + 15;
+    //track.pose.position.z = 0;// * 10 + 15;
+    //track.pose.orientation.x = 0;
+    //track.pose.orientation.y = 0;
+    //track.pose.orientation.z = 0;
+    //track.pose.orientation.w = 1;
     odom->publish(track);
 
 

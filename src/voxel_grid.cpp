@@ -1,6 +1,6 @@
 #include <voxel_grid.hpp>
 
-#define THRES 0.7 //10000 //4500 //10000
+#define THRES 0.9 //10000 //4500 //10000
 #define MIN_DIST 16
 
 namespace GRID{
@@ -24,6 +24,13 @@ Voxel::Voxel(int dimX, int dimY, int dimZ){
     grid.resize(dimX * dimY * dimZ);
 
     std::fill(grid.begin(), grid.end(), 0);
+
+    //ROS_INFO("setup");
+    max = cv::Mat(dimX,dimY, CV_32FC1, cv::Scalar(0));
+    max_coordinates = cv::Mat(dimX, dimY, CV_32FC1, cv::Scalar(0));
+    max_filtered_coordinates = cv::Mat(dimX, dimY, CV_32FC1, cv::Scalar(0));
+    //ROS_INFO("complet");
+    //mask = cv::Mat(dimX, dimY, CV_U8);
 
 }
 
@@ -218,5 +225,56 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     return min_dist;
 }
 
+void Voxel::filter(){
+    // colaps z 
+    int tot_max = 0;
+    for(int z = 0; z < dim[2]; z++){
+        for (int y = 0; y < dim[1]; y++){
+            for (int x = 0; x < dim[0]; x++){
+                if (nr_ray(x,y,z) > max.at<float>(z,y)){
+                    max.at<float>(z,y) = (float) nr_ray(x,y,z);
+
+                    max_coordinates.at<float>(z,y) = (float) x;
+                    if (nr_ray(x,y,z) > tot_max){
+                        tot_max = nr_ray(x,y,z);
+                    }
+                }
+            }
+        }
+    }
+    //ROS_INFO("colapsed");
+
+    /*
+    //normalise
+    for(int x = 0; x < dim[0]; x++){
+        for(int y = 0; y < dim[1]; y++){
+            max.at<float>(x,y) = (max.at<float>(x,y) / (float)tot_max) * 255.0;
+       }
+    }
+    */
+    cv::Mat max_8;
+    cv::normalize(max, max_8, 0.0, 255.0, cv::NORM_MINMAX);
+    max_8.convertTo(max_8, CV_8U);
+    
+    //ROS_INFO("normlised");
+
+    //addaptiv
+    cv::adaptiveThreshold(max_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, 1.);
+
+    //ROS_INFO("addapted");
+    // filter
+    for(int z = 0; z < dim[2]; z++){
+        for(int y = 0; y < dim[1]; y++){
+            if(mask.at<float>(z,y) > 0){
+                max_filtered_coordinates.at<float>(z,y) = max_coordinates.at<float>(z,y);
+            }
+        }
+    }
+}
+
+int Voxel::filtered_mark(int z, int y){
+    //ROS_INFO("retreve");
+    return (int) max_filtered_coordinates.at<float>(z,y);
+}
 
 } //namespace
