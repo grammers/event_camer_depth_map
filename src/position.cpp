@@ -33,9 +33,9 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     quart[0] = msg->pose.position.x;
     quart[1] = msg->pose.position.y;
     quart[2] = msg->pose.position.z;
-    quart[3] = msg->pose.orientation.z;
-    quart[4] = -msg->pose.orientation.x;
-    quart[5] = -msg->pose.orientation.y;
+    quart[3] = msg->pose.orientation.x;
+    quart[4] = msg->pose.orientation.y;
+    quart[5] = msg->pose.orientation.z;
     quart[6] = msg->pose.orientation.w;
 
     if (!first){

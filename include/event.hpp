@@ -12,6 +12,8 @@ public:
     void event_callback(const dvs_msgs::EventArray::ConstPtr& msg);
     void set_camera(double fx, double fy, double cx, double cy);
     double get_f();
+    double get_fx();
+    double get_fy();
 
 private:
 

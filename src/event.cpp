@@ -36,6 +36,14 @@ double Event::get_f(){
     return f;
 }
 
+double Event::get_fx(){
+    return fx;
+}
+
+double Event::get_fy(){
+    return fy;
+}
+
 void Event::set_camera(double fx, double fy, double cx, double cy){
     this->f = (fx + fy) / 2;
     this->fx = fx;

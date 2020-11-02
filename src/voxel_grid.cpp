@@ -1,6 +1,7 @@
 #include <voxel_grid.hpp>
 
-#define THRES 0.9 //10000 //4500 //10000
+//#define THRES 0.5 //10000 //4500 //10000
+#define THRES 100 //4500 //10000
 #define MIN_DIST 16
 
 namespace GRID{
@@ -159,7 +160,8 @@ int Voxel::nr_ray(int x, int y, int z){
 
 bool Voxel::is_marked(int x, int y, int z){
     //ROS_INFO("where %i",grid[x + dim[0] * (y + dim[1] * z)]);
-    if (((double) grid[x + dim[0] * (y + dim[1] * z)] / (double) max_ray) > THRES){
+    //if (((double) grid[x + dim[0] * (y + dim[1] * z)] / (double) max_ray) > THRES){
+    if (((double) grid[x + dim[0] * (y + dim[1] * z)] ) > THRES){
         return true;
     }
     return false;
@@ -225,13 +227,56 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     return min_dist;
 }
 
-void Voxel::filter(){
+int Voxel::max_nr_ray(double *pos, double* direction, int w, int h){
+    double ray [6];
+    setup(pos, direction, ray);
+    int this_max = 0;
+    int max_index[3] {0,0,0};
+
+    for (int i = 0; i < 3; i++){
+        int change = ray_direction(ray[i + 3]);
+        for (int plain = (int)ray[i] + change; plain < dim[i] && plain >= 0; plain += change){
+            double t = (plain - ray[i]) / ray[i + 3];
+            int index [3];
+            hit_id(t, ray, index);
+            if(!in_bound(index)){
+                break;
+            }
+            int nr = nr_ray(index[0], index[1], index[2]);
+            if (nr > this_max){
+                this_max = nr;
+                max_index[0] = index[0];
+                max_index[1] = index[1];
+                max_index[2] = index[2];
+            }
+
+        }
+    }
+    max.at<float>(w,h) = (float) this_max;
+    max_coordinates.at<float>(w,h) =(float) max_index[0];
+    return this_max;
+}
+
+void Voxel::filter(double *pos, int width, int height, double fx, double fy){
+    max = cv::Mat(width,height, CV_32FC1, cv::Scalar(0));
+    max_coordinates = cv::Mat(width, height, CV_32FC1, cv::Scalar(0));
+    max_filtered_coordinates = cv::Mat(width, height, CV_32FC1, cv::Scalar(0));
     // colaps z 
     int tot_max = 0;
+    for (int w = 0; w < width; w++){
+        for (int h = 0; h < height; h++){
+            double direction[3] = {(w - width/2) / fx, (h - height/2) / fy, 1};
+            int this_max = max_nr_ray(pos, direction, w, h);
+            if (this_max > tot_max){
+                tot_max = this_max;
+            }
+        }
+    }
+    /*
     for(int z = 0; z < dim[2]; z++){
         for (int y = 0; y < dim[1]; y++){
             for (int x = 0; x < dim[0]; x++){
-                if (nr_ray(x,y,z) > max.at<float>(z,y)){
+                if ((float)nr_ray(x,y,z) > max.at<float>(z,y)){
                     max.at<float>(z,y) = (float) nr_ray(x,y,z);
 
                     max_coordinates.at<float>(z,y) = (float) x;
@@ -242,6 +287,7 @@ void Voxel::filter(){
             }
         }
     }
+    */
     //ROS_INFO("colapsed");
 
     /*
@@ -259,22 +305,26 @@ void Voxel::filter(){
     //ROS_INFO("normlised");
 
     //addaptiv
-    cv::adaptiveThreshold(max_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, 1.);
+    cv::adaptiveThreshold(max_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 15, -10.);
 
     //ROS_INFO("addapted");
     // filter
-    for(int z = 0; z < dim[2]; z++){
-        for(int y = 0; y < dim[1]; y++){
-            if(mask.at<float>(z,y) > 0){
-                max_filtered_coordinates.at<float>(z,y) = max_coordinates.at<float>(z,y);
+    for(int w = 0; w < width; w++){
+        for(int h = 0; h < height; h++){
+            if(mask.at<float>(w,h) > 0){
+                if(max_coordinates.at<float>(w,h) > 0){
+                    max_filtered_coordinates.at<float>(w,h) = max_coordinates.at<float>(w,h);
+                }
             }
         }
     }
 }
 
-int Voxel::filtered_mark(int z, int y){
+int Voxel::filtered_mark(int w, int h){
     //ROS_INFO("retreve");
-    return (int) max_filtered_coordinates.at<float>(z,y);
+    //return (int)mask.at<uchar>(w,h);
+    return (int) max_filtered_coordinates.at<float>(w,h);
+    //return (int) max_coordinates.at<float>(w,h);
 }
 
 } //namespace

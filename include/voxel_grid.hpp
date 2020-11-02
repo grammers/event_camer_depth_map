@@ -20,7 +20,7 @@ public:
     void normalise();
     int nr_ray(int x, int y, int z);
 
-    void filter();
+    void filter(double *pos, int width, int height, double fx, double fy);
     int filtered_mark(int x, int y);
 private:
 
@@ -45,6 +45,8 @@ private:
     cv::Mat max_coordinates;
     cv::Mat max_filtered_coordinates;
     cv::Mat mask;
+
+    int max_nr_ray(double *pos, double *direction, int w, int h);
 
 
     double distans(int *index, double *ray);

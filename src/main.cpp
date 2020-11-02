@@ -58,8 +58,8 @@ void add_marker(int x, int y, int z){
         marker.scale.y = 1.0;
         marker.scale.z = 1.0;
         marker.color.a = 1.0; // Don't forget to set the alpha!
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
         marker.color.b = 0.0;
         //ROS_INFO("MARKER %i %i %i", x ,y ,z);
         marker_array.markers.push_back(marker);
@@ -68,9 +68,9 @@ void add_marker(int x, int y, int z){
 
 }
 
-void addaptiv(int z, int y){
-    int x = grid.filtered_mark(z, y);
-    if (x > 0){
+void addaptiv(int w, int h){
+    int d = grid.filtered_mark(w, h);
+    if (d >= 0){
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
@@ -79,9 +79,9 @@ void addaptiv(int z, int y){
         id++;
         marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = x;
-        marker.pose.position.y = y;
-        marker.pose.position.z = z;
+        marker.pose.position.x = d;
+        marker.pose.position.y = w;
+        marker.pose.position.z = h;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
@@ -100,13 +100,13 @@ void addaptiv(int z, int y){
 
 }
 
-void add_2d_marker(int z, int y){
+void add_2d_marker(int w, int h){
     int max = 0;
-    int X = 0;
-    for (int x = 0; x < DIMX; x++){
-        if (grid.nr_ray(x, y, z) > max){
-            max = grid.nr_ray(x, y, z);
-            X = x;
+    int D = 0;
+    for (int d = 0; d < DIMX; d++){
+        if (grid.nr_ray(w, h, d) > max){
+            max = grid.nr_ray(w, h, d);
+            D = d;
         }
     }
     if (max > 1000){
@@ -118,9 +118,9 @@ void add_2d_marker(int z, int y){
         id++;
         marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = X;
-        marker.pose.position.y = y;
-        marker.pose.position.z = z;
+        marker.pose.position.x = w;
+        marker.pose.position.y = h;
+        marker.pose.position.z = D;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
@@ -150,16 +150,24 @@ void marker(const ros::TimerEvent&){
     //marker_pub.publish(marker_array);
     marker_array.markers.empty();
     
-    //grid.normalise();
-    grid.filter();
+    double fw = event.get_fx();
+    double fh = event.get_fy();
+    double* position = pos.get_current_pos();
+
+    grid.filter(position, width, height,fw,fh);
     size = 0;
+    for (int w = 0; w < width; w++){ 
+        for (int h = 0; h < height; h++){
+            addaptiv(w, h);
+            //add_2d_marker(x, y);
+        }
+    }
+    grid.normalise();
     for (int x = 0; x < DIMX; x++){ 
         for (int y = 0; y < DIMY; y++){
-            addaptiv(x, y);
-            //add_2d_marker(x, y);
-            //for (int z = 0; z < DIMZ; z++){
-            //    add_marker(x, y, z);
-            //}
+            for (int z = 0; z < DIMZ; z++){
+                add_marker(x, y, z);
+            }
         }
     }
     //ROS_INFO("re pub");
