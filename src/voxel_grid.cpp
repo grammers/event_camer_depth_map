@@ -149,7 +149,9 @@ void Voxel::normalise(){
     max_ray = 0;
     int size = grid.size();
     for (int i = 0; i < size; i++){
-        if (grid[i] > max_ray) { max_ray = grid[i];}
+        if (grid[i] > max_ray) {
+            max_ray = grid[i];
+        }
     }
 }
 
@@ -252,15 +254,15 @@ int Voxel::max_nr_ray(double *pos, double* direction, int w, int h){
 
         }
     }
-    max.at<float>(w,h) = (float) this_max;
-    max_coordinates.at<float>(w,h) =(float) max_index[0];
+    max.at<float>(h,w) = (float) this_max;
+    max_coordinates.at<float>(h,w) =(float) max_index[0];
     return this_max;
 }
 
 void Voxel::filter(double *pos, int width, int height, double fx, double fy){
-    max = cv::Mat(width,height, CV_32FC1, cv::Scalar(0));
-    max_coordinates = cv::Mat(width, height, CV_32FC1, cv::Scalar(0));
-    max_filtered_coordinates = cv::Mat(width, height, CV_32FC1, cv::Scalar(0));
+    max = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
+    max_coordinates = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
+    max_filtered_coordinates = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
     // colaps z 
     int tot_max = 0;
     for (int w = 0; w < width; w++){
@@ -311,9 +313,9 @@ void Voxel::filter(double *pos, int width, int height, double fx, double fy){
     // filter
     for(int w = 0; w < width; w++){
         for(int h = 0; h < height; h++){
-            if(mask.at<float>(w,h) > 0){
-                if(max_coordinates.at<float>(w,h) > 0){
-                    max_filtered_coordinates.at<float>(w,h) = max_coordinates.at<float>(w,h);
+            if(mask.at<float>(h,w) > 0){
+                if(max_coordinates.at<float>(h,w) > 0){
+                    max_filtered_coordinates.at<float>(h,w) = max_coordinates.at<float>(w,h);
                 }
             }
         }
@@ -323,8 +325,8 @@ void Voxel::filter(double *pos, int width, int height, double fx, double fy){
 int Voxel::filtered_mark(int w, int h){
     //ROS_INFO("retreve");
     //return (int)mask.at<uchar>(w,h);
-    return (int) max_filtered_coordinates.at<float>(w,h);
-    //return (int) max_coordinates.at<float>(w,h);
+    //return (int) max_filtered_coordinates.at<float>(h,w);
+    return (int) max_coordinates.at<float>(w,h);
 }
 
 } //namespace

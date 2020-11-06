@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry_msgs/PoseStamped.h"
+#include "quaternion.hpp"
 //#include <ros/console.h>
 #include "ros/ros.h"
 #include <cmath>
@@ -15,20 +16,24 @@ public:
 
 private:
     ros::Publisher* odom;
+    geometry_msgs::PoseStamped track;
     
-    double current_pos [6];
-    double quart [7];
-    double last_pos [6];
-    double first_pos [6];
+    double current_pos [7];
+    QUART::Quarternion quart;
+    QUART::Quarternion last_quart;
+    double last_pos [3];
+    double first_pos [3];
     double latest_pos_ts;
     double current_pos_ts;
-    double my_pos [6];
+    double time_differens;
+    double my_pos [7];
     
-    double translation [6];
+    double translation [3];
 
     bool first;
 
     void quaterions_euler(double w, double x, double y, double z);
     void translation_calk();
+    void publish();
 };
 }

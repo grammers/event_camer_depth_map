@@ -9,12 +9,14 @@ set(HEADERS
     include/position.hpp
     include/event.hpp
     include/voxel_grid.hpp
+    include/quaternion.hpp
 )
 
 set(SOURCES
     src/position.cpp
     src/event.cpp
     src/voxel_grid.cpp
+    src/quaternion.cpp
 )
 
 cs_add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})

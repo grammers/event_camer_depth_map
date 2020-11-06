@@ -17,6 +17,7 @@
 ros::Publisher marker_pub;
 
 ros::Publisher odom;
+ros::Publisher depth_img_pub;
 visualization_msgs::MarkerArray marker_array;
 
 const int DIMX = 100;
@@ -70,7 +71,7 @@ void add_marker(int x, int y, int z){
 
 void addaptiv(int w, int h){
     int d = grid.filtered_mark(w, h);
-    if (d >= 0){
+    if (d > 0){
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
@@ -139,6 +140,12 @@ void add_2d_marker(int w, int h){
     }
 }
 
+void depth_map(int w, int h, cv::Mat img, double* pos){
+   int d = grid.filtered_mark(w,h);
+   uchar& c = img.at<uchar>(h,w); 
+   c = (uchar) ((sqrt( pow(w - pos[0],2) + pow(h - pos[1],2) + pow(d - pos[2], 2)) / 600) * 255);
+}
+
 void marker(const ros::TimerEvent&){
     //rviz_visual_tools::RvizVisualTools rviz();
     //rviz->deleteAllMarkers();
@@ -154,12 +161,15 @@ void marker(const ros::TimerEvent&){
     double fh = event.get_fy();
     double* position = pos.get_current_pos();
 
+    cv::Mat img(height, width, CV_8UC1, cv::Scalar(1));
+
     grid.filter(position, width, height,fw,fh);
     size = 0;
     for (int w = 0; w < width; w++){ 
         for (int h = 0; h < height; h++){
             addaptiv(w, h);
             //add_2d_marker(x, y);
+            depth_map(w, h, img, position);
         }
     }
     grid.normalise();
@@ -172,6 +182,8 @@ void marker(const ros::TimerEvent&){
     }
     //ROS_INFO("re pub");
     marker_pub.publish(marker_array);
+    sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", img).toImageMsg();
+    depth_img_pub.publish(msg);
 }
 
 void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
@@ -196,6 +208,7 @@ int main(int argc, char **argv){
     ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
 
     marker_pub = n.advertise<visualization_msgs::MarkerArray>( "/visualization_marker", 0 );
+    depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
     ros::Timer timer = n.createTimer(ros::Duration(1.5), marker);
 
 
