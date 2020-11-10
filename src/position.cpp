@@ -11,12 +11,16 @@ Position::Position(ros::Publisher *odom){
     quart = QUART::Quarternion();
     last_quart = QUART::Quarternion();
     //ROS_INFO("init done");
+
+    hoop_pos[0] = 0;
+    hoop_pos[1] = 0;
+    hoop_pos[2] = 0;
 }
 
 
-void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+void Position::odom_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
     //ROS_INFO("odom");
-
+/*
     latest_pos_ts = current_pos_ts;
     last_quart.update(&quart);
     for (int i = 0; i < 3; i++){
@@ -25,26 +29,28 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
     //ROS_INFO("update last");
     // slider_depth has a non convential cordinat frame
-    //current_pos[0] = msg->pose.position.z;
-    //current_pos[1] = -msg->pose.position.x;
-    //current_pos[2] = -msg->pose.position.y;
+    //current_pos[0] = msg->transform.position.z;
+    //current_pos[1] = -msg->transform.position.x;
+    //current_pos[2] = -msg->transform.position.y;
 
-    //current_pos[0] = msg->pose.position.x;
-    //current_pos[1] = msg->pose.position.y;
-    //current_pos[2] = msg->pose.position.z;
-    //quaterions_euler(msg->pose.orientation.w, 
-    //                msg->pose.orientation.x, 
-    //                msg->pose.orientation.y, 
-    //                msg->pose.orientation.z);
+    //current_pos[0] = msg->transform.position.x;
+    //current_pos[1] = msg->transform.position.y;
+    //current_pos[2] = msg->transform.position.z;
+    //quaterions_euler(msg->transform.orientation.w, 
+    //                msg->transform.orientation.x, 
+    //                msg->transform.orientation.y, 
+    //                msg->transform.orientation.z);
     
-    current_pos[0] = msg->pose.position.x;
-    current_pos[1] = msg->pose.position.y;
-    current_pos[2] = msg->pose.position.z;
-    quart.update(msg->pose.orientation.w,
-                 msg->pose.orientation.x,
-                 msg->pose.orientation.y,
-                 msg->pose.orientation.z);
-
+*/
+    current_pos[0] = msg->transform.translation.x;
+    current_pos[1] = msg->transform.translation.y;
+    current_pos[2] = msg->transform.translation.z;
+    
+    quart.update(msg->transform.rotation.w,
+                 -msg->transform.rotation.x,
+                 -msg->transform.rotation.y,
+                 -msg->transform.rotation.z);
+/*
     //ROS_INFO("Read new");
     if (!first){
         for(int i = 0; i < 3; i++){
@@ -58,20 +64,48 @@ void Position::odom_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     current_pos_ts = msg->header.stamp.toSec();
     translation_calk();
 
-    //ROS_INFO("quartileon %f %f %f %f", msg->pose.orientation.w, msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z);
-    //ROS_INFO("ocom_callback %f %f %f %f %f %f", current_pos[0], current_pos[1], current_pos[2], current_pos[3], current_pos[4], current_pos[5]);
+    //ROS_INFO("quartileon %f %f %f %f", msg->transform.orientation.w, msg->transform.orientation.x, msg->transform.orientation.y, msg->transform.orientation.z);
+    //ROS_INFO("ocom_callback %f %f %f %f %f %f %f", current_pos[0], current_pos[1], current_pos[2], quart.w, quart.x, quart.y, quart.z);
     
-    track = *msg;
+    track.header = msg->header;
 
 
     //ROS_INFO("end pos callback");
+*/
+}
+
+void Position::hula_hoop_callback( const geometry_msgs::TransformStamped::ConstPtr& msg){
+/*
+    latest_pos_ts = current_pos_ts;
+    last_quart.update(&quart);
+    for (int i = 0; i < 3; i++){
+        last_pos[i] = current_pos[i];
+    }
+    
+    hoop_pos[0] = msg->transform.translation.x;
+    hoop_pos[1] = msg->transform.translation.y;
+    hoop_pos[2] = msg->transform.translation.z;
+*/
+/*
+    if (!first){
+        for(int i = 0; i < 3; i++){
+            first_pos[i] = current_pos[i];
+        }
+        first = true;
+    }
+    for(int i = 0; i < 3; i++){
+        current_pos[i] -= first_pos[i];
+    }
+*/
+    current_pos_ts = msg->header.stamp.toSec();
+
 }
 
 void Position::publish(){
-    track.header.frame_id = "map";
-    track.pose.position.x = my_pos[0];// * 10 + 15;
-    track.pose.position.y = my_pos[1];// * 10 + 15;
-    track.pose.position.z = my_pos[2];// * 10 + 15;
+    track.header.frame_id = "world";
+    track.pose.position.x = my_pos[0] * 33.0 + 75;
+    track.pose.position.y = my_pos[1] * 33.0 + 75;
+    track.pose.position.z = my_pos[2] * 33.0 + 75;
     track.pose.orientation.x = my_pos[3];
     track.pose.orientation.y = my_pos[4];
     track.pose.orientation.z = my_pos[5];
@@ -143,13 +177,14 @@ void Position::translation_calk(){
 
 double * Position::get_current_pos(){
     
-    my_pos[0] = current_pos[0];
-    my_pos[1] = current_pos[1];
-    my_pos[2] = current_pos[2];
+    my_pos[0] = current_pos[0] - hoop_pos[0];
+    my_pos[1] = current_pos[1] - hoop_pos[1];
+    my_pos[2] = current_pos[2] - hoop_pos[2];
     my_pos[3] = quart.x;
     my_pos[4] = quart.y;
     my_pos[5] = quart.z;
     my_pos[6] = quart.w;
+    publish();
     return my_pos;
     //return current_pos;
 }

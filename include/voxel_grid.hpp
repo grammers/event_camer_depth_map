@@ -42,9 +42,11 @@ private:
 
     //filering stuf
     cv::Mat max;
+    cv::Mat max_dist;
     cv::Mat max_coordinates;
     cv::Mat max_filtered_coordinates;
     cv::Mat mask;
+    cv::Mat max_8;
 
     int max_nr_ray(double *pos, double *direction, int w, int h);
 

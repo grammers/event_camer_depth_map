@@ -20,9 +20,9 @@ ros::Publisher odom;
 ros::Publisher depth_img_pub;
 visualization_msgs::MarkerArray marker_array;
 
-const int DIMX = 100;
-const int DIMY = 100;
-const int DIMZ = 100;
+const int DIMX = 150;
+const int DIMY = 150;
+const int DIMZ = 150;
 
 int width = 350;
 int height = 350;
@@ -30,6 +30,7 @@ int height = 350;
 int id = 0;
 int size = 0;
 double ts_offset;
+bool got_cam = false;
 
 ODOM::Position pos(&odom);
 //GRID::Voxel grid(10, 10, 10); 
@@ -41,7 +42,7 @@ EVENT::Event event(&pos, &grid);
 void add_marker(int x, int y, int z){
     if (grid.is_marked(x, y, z)){
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "map";
+        marker.header.frame_id = "world";
         marker.header.stamp = ros::Time();
         marker.ns = "my_namespace";
         marker.id = id;
@@ -73,15 +74,15 @@ void addaptiv(int w, int h){
     int d = grid.filtered_mark(w, h);
     if (d > 0){
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "map";
+        marker.header.frame_id = "world";
         marker.header.stamp = ros::Time();
         marker.ns = "my_namespace";
         marker.id = id;
         id++;
         marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.position.x = d;
-        marker.pose.position.y = w;
+        marker.pose.position.x = w;
+        marker.pose.position.y = d;
         marker.pose.position.z = h;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
@@ -112,7 +113,7 @@ void add_2d_marker(int w, int h){
     }
     if (max > 1000){
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "map";
+        marker.header.frame_id = "world";
         marker.header.stamp = ros::Time();
         marker.ns = "my_namespace";
         marker.id = id;
@@ -142,8 +143,12 @@ void add_2d_marker(int w, int h){
 
 void depth_map(int w, int h, cv::Mat img, double* pos){
    int d = grid.filtered_mark(w,h);
-   uchar& c = img.at<uchar>(h,w); 
-   c = (uchar) ((sqrt( pow(w - pos[0],2) + pow(h - pos[1],2) + pow(d - pos[2], 2)) / 600) * 255);
+
+    if (d != 0){
+        uchar& c = img.at<uchar>(h,w); 
+        //ROS_INFO("%i", d);
+        c = (uchar) d;// ((sqrt( pow(w - with/2 - pos[0],2) + pow(d - pos[1],2) + pow(h - heigh - pos[2], 2)) / 130) * 255);
+    }
 }
 
 void marker(const ros::TimerEvent&){
@@ -163,15 +168,18 @@ void marker(const ros::TimerEvent&){
 
     cv::Mat img(height, width, CV_8UC1, cv::Scalar(1));
 
+    //ROS_INFO("setup");
     grid.filter(position, width, height,fw,fh);
     size = 0;
+    //ROS_INFO("filtered");
     for (int w = 0; w < width; w++){ 
         for (int h = 0; h < height; h++){
-            addaptiv(w, h);
-            //add_2d_marker(x, y);
+            //addaptiv(w, h);
+            //add_2d_marker(w, h);
             depth_map(w, h, img, position);
         }
     }
+    //ROS_INFO("betwen");
     grid.normalise();
     for (int x = 0; x < DIMX; x++){ 
         for (int y = 0; y < DIMY; y++){
@@ -187,11 +195,14 @@ void marker(const ros::TimerEvent&){
 }
 
 void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
-    event.set_camera(msg->K[0], msg->K[4], msg->K[2], msg->K[5]);
+    //ROS_INFO("camera");
+    //event.set_camera(msg->K[0], msg->K[4], msg->K[2], msg->K[5]);
+    event.set_camera(224, 224, 320, 240);
     width = msg->width;
     height = msg->height;
     //ts_offset = msg->header.stamp.toSec();
     ts_offset = ros::Time::now().toSec();
+    got_cam = true;
     return;
 }
 
@@ -200,12 +211,16 @@ int main(int argc, char **argv){
     ros::init(argc, argv, "depth_map");
     ros::NodeHandle n;
     
-    ros::Subscriber camera_info_sub = n.subscribe("/dvs/camera_info", 1, cam_callback);
+    ros::Subscriber camera_info_sub = n.subscribe("/prophesee/camera/camera_info", 1, cam_callback);
+    while(!got_cam){
+        ros::spinOnce();
+    }
 
-    ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, &ODOM::Position::odom_callback, &pos);
+    ros::Subscriber odometry_sub = n.subscribe("/vicon/event_camera/event_camera", 10, &ODOM::Position::odom_callback, &pos);
+    ros::Subscriber odometry_hoop_sub = n.subscribe("/vicon/hoop/hoop", 10, &ODOM::Position::hula_hoop_callback, &pos);
     odom = n.advertise<geometry_msgs::PoseStamped>("/optitrack/map",10);
 
-    ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
+    ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);
 
     marker_pub = n.advertise<visualization_msgs::MarkerArray>( "/visualization_marker", 0 );
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);

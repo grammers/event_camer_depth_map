@@ -12,7 +12,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>dvs_msgs</depend>
+  <depend>prophesee_event_msgs</depend>
 
   <build_depend>roscpp</build_depend>
   <build_depend>geometry_msgs</build_depend>

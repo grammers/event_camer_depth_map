@@ -1,4 +1,5 @@
 #pragma once
+#include "geometry_msgs/TransformStamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "quaternion.hpp"
 //#include <ros/console.h>
@@ -10,7 +11,8 @@ namespace ODOM{
 class Position{
 public:
     Position(ros::Publisher *odom);
-    void odom_callback(const geometry_msgs::PoseStamped::ConstPtr& mag);
+    void odom_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
+    void hula_hoop_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
     double * pos_at(double ts);
     double * get_current_pos();
 
@@ -19,6 +21,7 @@ private:
     geometry_msgs::PoseStamped track;
     
     double current_pos [7];
+    double hoop_pos[3];
     QUART::Quarternion quart;
     QUART::Quarternion last_quart;
     double last_pos [3];
