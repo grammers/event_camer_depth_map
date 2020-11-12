@@ -5,8 +5,8 @@ namespace MEDFIL{
 int MedianFilter::get_value(const cv::Mat& img, const cv::Mat& mask, int row, int col){
     //ROS_INFO("row col: %i %i", row, col);
     if(row >= 0 && col >= 0 &&
-        row < img.rows && col < img.cols){// &&
-        //mask.at<uint8_t>(row,col) > 0){
+        row < img.rows && col < img.cols &&
+        mask.at<uint8_t>(row,col) > 0){
 
         return img.at<uchar>(row,col);
     }
@@ -42,8 +42,9 @@ int MedianFilter::compute_median(int *h, int num_elements){
 
 void MedianFilter::median(const cv::Mat& img, cv::Mat& filter, const cv::Mat& mask, int patch_size){
 
+    //ROS_INFO("arived");
     filter = img.clone();
-
+    //ROS_INFO("clone");
     int p = patch_size / 2;
     int med;
     int prev, next;
@@ -53,12 +54,13 @@ void MedianFilter::median(const cv::Mat& img, cv::Mat& filter, const cv::Mat& ma
 
     memset(h, 0, sizeof(h));
     int num_elements = 0;
+    //ROS_INFO("def var");
 
     histogram(img, mask, h, num_elements, row, col, p);
 
     filter.at<uchar>(0,0) = compute_median(h, num_elements);
 
-
+    //ROS_INFO("pre loop");
     // manin loop
     for(col = 1, row = 0; row < img.rows; row++){
         row1 = row - p;

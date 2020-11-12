@@ -234,26 +234,11 @@ double Voxel::depth_at_pixel(double *cam_pos, double *pixel_vector){
     return min_dist;
 }
 
-void Voxel::clean_up(double *ray, int *max_index){
-
-    for (int i = 0; i < 3; i++){
-        int change = ray_direction(ray[i + 3]);
-        for (int plain = (int)ray[i] + change; plain < dim[i] && plain >= 0; plain += change){
-            double t = (plain - ray[i]) / ray[i + 3];
-            int index [3];
-            hit_id(t, ray, index);
-            if(!in_bound(index)){
-                break;
-            }
-            else if(index[0] != max_index[0] &&
-                 index[1] != max_index[1] &&
-                 index[2] != max_index[1]){
-                grid[index[0] + dim[0] * (index[1] + dim[1] * index[2])] = 0;
-            }
-        }
+void Voxel::clear(){
+    int size = dim[0] * dim[1] * dim[2];
+    for (int i = 0; i < size; i++){
+        grid[i] = 0;
     }
-
-
 }
 
 int Voxel::max_nr_ray(double *pos, double* direction, int w, int h){
@@ -283,7 +268,8 @@ int Voxel::max_nr_ray(double *pos, double* direction, int w, int h){
     }
     max.at<float>(h,w) = (float) this_max;
     max_dist.at<uchar>(h,w) = (uchar) ((float)(sqrt(pow(max_index[0] - pos[0], 2) + pow(max_index[1] - pos[1], 2) + pow(max_index[2] - pos[2], 2)) / 130.0) * 255);
-    max_coordinates.at<float>(h,w) =(float) max_index[2];
+    max_coordinates.at<uchar>(h,w) = (int) ray[2] - max_index[2];
+    //ROS_INFO("%f %i", ray[2], max_index[2]);
     
 
     //clean_up(ray, max_index);
@@ -294,8 +280,8 @@ int Voxel::max_nr_ray(double *pos, double* direction, int w, int h){
 void Voxel::filter(double *pos, int width, int height, double fx, double fy){
     max = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
     max_dist = cv::Mat(height, width, CV_8U, cv::Scalar(254));
-    max_coordinates = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
-    max_filtered_coordinates = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
+    max_coordinates = cv::Mat(height, width, CV_8U, cv::Scalar(0));
+    max_filtered_coordinates = cv::Mat(height, width, CV_8U, cv::Scalar(0));
     // colaps z 
     int tot_max = 0;
     for (int w = 0; w < width; w++){
@@ -338,38 +324,42 @@ void Voxel::filter(double *pos, int width, int height, double fx, double fy){
        }
     }
     */
-    cv::normalize(max, max_8, 0.0, 255.0, cv::NORM_MINMAX);
-    max_8.convertTo(max_8, CV_8U);
+    //cv::normalize(max, max_8, 0.0, 255.0, cv::NORM_MINMAX);
+    //max_8.convertTo(max_8, CV_8U);
     
     //ROS_INFO("normlised");
 
     //addaptiv
-    cv::Mat this_mask;
-    cv::adaptiveThreshold(max_8, mask, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, -1.);
+    //cv::Mat this_mask;
+    //cv::adaptiveThreshold(max_8, mask, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, -1.);
 
-    MEDFIL::MedianFilter hmf = MEDFIL::MedianFilter();
-    hmf.median(max_coordinates, max_filtered_coordinates, mask, 2);
+    //ROS_INFO("mid");
+
+    //MEDFIL::MedianFilter hmf = MEDFIL::MedianFilter();
+    //hmf.median(max_dist, max_filtered_coordinates, mask, 5);
     
+    /*
     //ROS_INFO("addapted");
     // filter
     for(int w = 0; w < width; w++){
         for(int h = 0; h < height; h++){
             //if(max_8.at<uchar>(h,w) > 0){
-            if(max_filtered_coordinates.at<float>(h,w) < 0.1){
+            if(max_filtered_coordinates.at<uchar>(h,w) > 0){
                 //max_filtered_coordinates.at<float>(h,w) = max_ifiltered_coordinates.at<float>(h,w);
-                max_dist.at<uchar>(h,w) = (uchar) 255;
+                //max_dist.at<uchar>(h,w) = (uchar) 255;
             }
         }
     }
-    
+    */
+    clear(); 
 }
 
 int Voxel::filtered_mark(int w, int h){
     //ROS_INFO("retreve");
     //return (int) mask.at<uchar>(h,w);
-    return (int) max_filtered_coordinates.at<float>(h,w);
+    //return (int) max_filtered_coordinates.at<uchar>(h,w);
     //return (int) max_coordinates.at<float>(h,w);
-    //return (int) max_dist.at<uchar>(h,w);
+    return (int) max_dist.at<uchar>(h,w);
     //return (int) max_8.at<uchar>(h,w);
 }
 

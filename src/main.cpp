@@ -144,41 +144,46 @@ void add_2d_marker(int w, int h){
 void depth_map(int w, int h, cv::Mat img, double* pos){
    int d = grid.filtered_mark(w,h);
 
-    if (d != 0){
+    //if (d != 0){
         uchar& c = img.at<uchar>(h,w); 
         //ROS_INFO("%i", d);
         c = (uchar) d;// ((sqrt( pow(w - with/2 - pos[0],2) + pow(d - pos[1],2) + pow(h - heigh - pos[2], 2)) / 130) * 255);
-    }
+    //}
 }
 
 void marker(const ros::TimerEvent&){
     //rviz_visual_tools::RvizVisualTools rviz();
     //rviz->deleteAllMarkers();
     //ROS_INFO("WHER");
+    int width_ = width;// / 2;
+    int height_ = height;// /2;
+    /*
     for (int i = 0; i < marker_array.markers.size(); i++){
         marker_array.markers[i].header.stamp = ros::Time();
         marker_array.markers[i].action = 2;
     }
     //marker_pub.publish(marker_array);
     marker_array.markers.empty();
+   */ 
     
-    double fw = event.get_fx();
-    double fh = event.get_fy();
+    double fw = event.get_fx();// / 3;
+    double fh = event.get_fy();// / 3;
     double* position = pos.get_current_pos();
 
-    cv::Mat img(height, width, CV_8UC1, cv::Scalar(1));
+    cv::Mat img(height_, width_, CV_8UC1, cv::Scalar(1));
 
     //ROS_INFO("setup");
-    grid.filter(position, width, height,fw,fh);
+    grid.filter(position, width_, height_,fw,fh);
     size = 0;
     //ROS_INFO("filtered");
-    for (int w = 0; w < width; w++){ 
-        for (int h = 0; h < height; h++){
+    for (int w = 0; w < width_; w++){ 
+        for (int h = 0; h < height_; h++){
             //addaptiv(w, h);
             //add_2d_marker(w, h);
             depth_map(w, h, img, position);
         }
     }
+    
     /*
     //ROS_INFO("betwen");
     grid.normalise();
@@ -190,8 +195,9 @@ void marker(const ros::TimerEvent&){
         }
     }
     */
+    
     //ROS_INFO("re pub");
-    marker_pub.publish(marker_array);
+    //marker_pub.publish(marker_array);
     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", img).toImageMsg();
     depth_img_pub.publish(msg);
 }
@@ -226,7 +232,7 @@ int main(int argc, char **argv){
 
     marker_pub = n.advertise<visualization_msgs::MarkerArray>( "/visualization_marker", 0 );
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
-    ros::Timer timer = n.createTimer(ros::Duration(1.5), marker);
+    ros::Timer timer = n.createTimer(ros::Duration(0.5), marker);
 
 
     while(ros::ok()){
