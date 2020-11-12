@@ -10,6 +10,7 @@ set(HEADERS
     include/event.hpp
     include/voxel_grid.hpp
     include/quaternion.hpp
+    include/median_filter.hpp
 )
 
 set(SOURCES
@@ -17,6 +18,7 @@ set(SOURCES
     src/event.cpp
     src/voxel_grid.cpp
     src/quaternion.cpp
+    src/median_filter.cpp
 )
 
 cs_add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})

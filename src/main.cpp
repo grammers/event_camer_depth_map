@@ -179,6 +179,7 @@ void marker(const ros::TimerEvent&){
             depth_map(w, h, img, position);
         }
     }
+    /*
     //ROS_INFO("betwen");
     grid.normalise();
     for (int x = 0; x < DIMX; x++){ 
@@ -188,6 +189,7 @@ void marker(const ros::TimerEvent&){
             }
         }
     }
+    */
     //ROS_INFO("re pub");
     marker_pub.publish(marker_array);
     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", img).toImageMsg();

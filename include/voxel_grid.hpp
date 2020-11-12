@@ -2,6 +2,7 @@
 #include <vector> 
 #include <cmath>
 #include <opencv2/imgproc.hpp>
+#include <median_filter.hpp>
 
 //for debug
 #include "ros/ros.h"
@@ -50,6 +51,7 @@ private:
 
     int max_nr_ray(double *pos, double *direction, int w, int h);
 
+    void clean_up(double *ray, int *max_index);
 
     double distans(int *index, double *ray);
     void hit_id(double t, double *ray, int *index);
