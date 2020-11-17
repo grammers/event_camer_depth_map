@@ -13,30 +13,26 @@ public:
     Position(ros::Publisher *odom);
     void odom_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
     void hula_hoop_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
-    double * pos_at(double ts);
+
     double * get_current_pos();
+    void dir_vector(double *dir);
+    void reset();
 
 private:
     ros::Publisher* odom;
     geometry_msgs::PoseStamped track;
     
-    double current_pos [7];
+    double pos_origin [3];
+    double pos_last [3];
+    double pos_relative [3];
     double hoop_pos[3];
-    QUART::Quarternion quart;
-    QUART::Quarternion last_quart;
-    double last_pos [3];
-    double first_pos [3];
-    double latest_pos_ts;
-    double current_pos_ts;
-    double time_differens;
+
+    QUAT::Quaternion quat_origin;
+    QUAT::Quaternion quat_last;
+    QUAT::Quaternion quat_relative;
+
     double my_pos [7];
     
-    double translation [3];
-
-    bool first;
-
-    void quaterions_euler(double w, double x, double y, double z);
-    void translation_calk();
     void publish();
 };
 }

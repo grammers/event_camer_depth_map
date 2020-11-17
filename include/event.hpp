@@ -9,7 +9,7 @@ namespace EVENT{
 
 class Event{
 public:
-    Event(ODOM::Position *p, GRID::Voxel *grid);
+    Event(GRID::Voxel *grid);
     void event_callback(const prophesee_event_msgs::EventArray::ConstPtr& msg);
     void set_camera(double fx, double fy, double cx, double cy);
     double get_f();
@@ -19,7 +19,6 @@ public:
 private:
 
     GRID::Voxel* grid;
-    ODOM::Position* pos;
     double f;
     double fx;
     double fy;
