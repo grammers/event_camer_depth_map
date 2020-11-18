@@ -13,8 +13,8 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
-#define FX_IN 300
-#define FY_IN 300
+#define FX_IN 600
+#define FY_IN 600
 #define FX_UT 220
 #define FY_UT 220
 #define WIDHT 256
@@ -91,7 +91,7 @@ int main(int argc, char **argv){
     ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);
 
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
-    ros::Timer timer = n.createTimer(ros::Duration(1), marker);
+    //ros::Timer timer = n.createTimer(ros::Duration(1), marker);
 
     //debug calibrations
     ros::Subscriber odometry_hoop_sub = n.subscribe("/vicon/hoop/hoop", 10, &ODOM::Position::hula_hoop_callback, &pos);

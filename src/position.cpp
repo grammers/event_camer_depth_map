@@ -46,11 +46,13 @@ void Position::odom_callback(const geometry_msgs::TransformStamped::ConstPtr& ms
 }
 
 void Position::hula_hoop_callback( const geometry_msgs::TransformStamped::ConstPtr& msg){
+    /*
     ROS_INFO("GT dist %f", sqrt(
         POW(msg->transform.translation.x - pos_last[0]) +
         POW(msg->transform.translation.y - pos_last[1]) +
         POW(msg->transform.translation.z - pos_last[2])
         ));
+    */
 
 }
 

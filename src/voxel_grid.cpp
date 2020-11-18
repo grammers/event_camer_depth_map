@@ -2,7 +2,7 @@
 
 #define THRES 0.1 //10000 //4500 //10000
 //#define THRES 1000 //4500 //10000
-#define MIN_DIST 30
+#define MIN_DIST 10
 
 namespace GRID{
 
@@ -162,14 +162,14 @@ void Voxel::filter(int width, int height, double fx, double fy){
         for (int h = 0; h < height; h++){
             double direction[3] = {
             1, 
-            (h - height/2) / fy,
-            -(w - width/2) / fx 
+            -(w - width/2) / fx, 
+            -(h - height/2) / fy
             };
 
             max_nr_ray(direction, w, h);
         }
     }
-    ROS_INFO("med %f %i", med / (float) nr, nr);
+    //ROS_INFO("med %f %i", med / (float) nr, nr);
 
 }
 
