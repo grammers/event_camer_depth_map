@@ -19,6 +19,7 @@ public:
     Quaternion(Quaternion *q);
     Quaternion(Quaternion *q1, Quaternion *q2);
 
+    void set_rot_to_frame(Quaternion *q);
     void update(Quaternion *q);
     void update(double w, double x, double y, double z);
     void multiply(Quaternion *q);

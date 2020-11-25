@@ -37,6 +37,10 @@ Quaternion::Quaternion(Quaternion *q1, Quaternion *q2) : Quaternion(q2){
     this->r = this->r * q1->r.transpose(); 
 }
 
+void Quaternion::set_rot_to_frame(Quaternion *q){
+    this->r = this->r * q->r.transpose(); 
+}
+
 void Quaternion::create_rotation(){
     //ROS_INFO("%f %f", y, POW(y));
     r << 1 - 2*POW(y) - 2*POW(z),   2*x*y - 2*z*w,              2*x*z + 2*y*w,

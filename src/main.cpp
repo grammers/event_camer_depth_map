@@ -13,12 +13,14 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
-#define FX_IN 600
-#define FY_IN 600
+#define FX_IN 200
+#define FY_IN 200
+#define CX 320
+#define CY 240
 #define FX_UT 220
 #define FY_UT 220
-#define WIDHT 256
-#define HEIGHT 256
+#define WIDHT 640
+#define HEIGHT 480
 
 
 ros::Publisher marker_pub;
@@ -27,9 +29,9 @@ ros::Publisher odom;
 ros::Publisher depth_img_pub;
 visualization_msgs::MarkerArray marker_array;
 
-const int DIMX = 110;
-const int DIMY = 150;
-const int DIMZ = 150;
+const int DIMX = WIDHT;
+const int DIMY = HEIGHT;
+const int DIMZ = 255;
 
 int width = 350;
 int height = 350;
@@ -41,8 +43,8 @@ bool got_cam = false;
 
 ODOM::Position pos(&odom);
 //GRID::Voxel grid(10, 10, 10); 
-GRID::Voxel grid(&pos, DIMX, DIMY, DIMZ); 
-EVENT::Event event(&grid);
+GRID::Voxel grid(&pos, DIMX, DIMY, DIMZ, FX_IN, FY_IN, CX, CY); 
+EVENT::Event event(&grid, &pos);
 
 void depth_map(int w, int h, cv::Mat img, double* pos){
    int d = grid.filtered_mark(w,h);
@@ -55,17 +57,21 @@ void depth_map(int w, int h, cv::Mat img, double* pos){
 }
 
 void marker(const ros::TimerEvent&){
-    
-    cv::Mat img(HEIGHT, WIDHT, CV_8UC1, cv::Scalar(255));
-
-    grid.filter(WIDHT, HEIGHT, FX_UT, FY_UT);
+    event.add_ray();
+    grid.filter();
+    cv::Mat img(HEIGHT, WIDHT, CV_8UC1, cv::Scalar(55));
     grid.depth_map(img);
-
     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", img).toImageMsg();
     depth_img_pub.publish(msg);
-
     grid.clear();
+
+/*    
+
+    grid.filter(WIDHT, HEIGHT, FX_UT, FY_UT);
+
+
     pos.reset();
+*/
 }
 
 void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
@@ -91,7 +97,7 @@ int main(int argc, char **argv){
     ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);
 
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
-    //ros::Timer timer = n.createTimer(ros::Duration(1), marker);
+    ros::Timer timer = n.createTimer(ros::Duration(5), marker);
 
     //debug calibrations
     ros::Subscriber odometry_hoop_sub = n.subscribe("/vicon/hoop/hoop", 10, &ODOM::Position::hula_hoop_callback, &pos);
