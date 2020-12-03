@@ -7,6 +7,7 @@
 #include <event_obj.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <cnpy.h>
 
 //for debug
 #include "ros/ros.h"
@@ -28,6 +29,7 @@ public:
 
     int filtered_mark(int x, int y);
     void depth_map(cv::Mat& img);
+    void npy();
     
 private:
 

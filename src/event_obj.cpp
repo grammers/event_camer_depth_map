@@ -2,10 +2,13 @@
 
 namespace EVENTOBJ{
 
-EventObj::EventObj(prophesee_event_msgs::Event e, ODOM::Position *pos) {
+EventObj::EventObj(dvs_msgs::Event e, ODOM::Position *pos) {
+//EventObj::EventObj(prophesee_event_msgs::Event e, ODOM::Position *pos) {
     event = e;
-    v_pos = pos->get_current_pos();
-    r_pos = pos->get_rot();
+    v_pos = pos->get_pos_at(get_ts());
+    r_pos = pos->get_rot_at(get_ts());
+    //v_pos = pos->get_current_pos();
+    //r_pos = pos->get_rot();
     //ODOM::Position cont_pos(pos);
     //this->pos = &cont_pos;
     //Eigen::Vector3f test = this->pos->get_current_pos();
@@ -21,7 +24,7 @@ float EventObj::get_y(){
     return (float) event.y;
 }
 
-int EventObj::get_ts(){
+double EventObj::get_ts(){
     return event.ts.toSec();
 }
 

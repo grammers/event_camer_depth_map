@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-//#include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/CameraInfo.h"
 #include "visualization_msgs/MarkerArray.h"
 #include <position.hpp>
@@ -13,14 +13,20 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
-#define FX_IN 200
-#define FY_IN 200
-#define CX 320
-#define CY 240
-#define FX_UT 220
-#define FY_UT 220
-#define WIDHT 640
-#define HEIGHT 480
+//#define FX_IN 500
+//#define FY_IN 500
+//#define CX 320
+//#define CY 240
+//#define FX_UT 220
+//#define FY_UT 220
+//#define WIDHT 640
+//#define HEIGHT 480
+#define FX_IN 199
+#define FY_IN 199
+#define CX 132
+#define CY 114
+#define WIDHT 240
+#define HEIGHT 180
 
 
 ros::Publisher marker_pub;
@@ -31,7 +37,7 @@ visualization_msgs::MarkerArray marker_array;
 
 const int DIMX = WIDHT;
 const int DIMY = HEIGHT;
-const int DIMZ = 255;
+const int DIMZ = 255/3;
 
 int width = 350;
 int height = 350;
@@ -63,6 +69,8 @@ void marker(const ros::TimerEvent&){
     grid.depth_map(img);
     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", img).toImageMsg();
     depth_img_pub.publish(msg);
+    grid.npy();
+    exit(0);
     grid.clear();
 
 /*    
@@ -78,7 +86,7 @@ void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
     //ROS_INFO("camera");
     width = msg->width;
     height = msg->height;
-    event.set_camera(FX_IN, FY_UT, width / 2, height / 2);
+    event.set_camera(FX_IN, FY_IN, width / 2, height / 2);
     got_cam = true;
     return;
 }
@@ -88,16 +96,20 @@ int main(int argc, char **argv){
     ros::init(argc, argv, "depth_map");
     ros::NodeHandle n;
     
-    ros::Subscriber camera_info_sub = n.subscribe("/prophesee/camera/camera_info", 1, cam_callback);
-    while(!got_cam){
-        ros::spinOnce();
-    }
+    event.set_camera(FX_IN, FY_IN, CX, CY);
+    //ros::Subscriber camera_info_sub = n.subscribe("/dvs/camera_info", 1, cam_callback);
+    //ros::Subscriber camera_info_sub = n.subscribe("/prophesee/camera/camera_info", 1, cam_callback);
+    //while(!got_cam){
+    //    ros::spinOnce();
+    //}
 
-    ros::Subscriber odometry_sub = n.subscribe("/vicon/event_camera/event_camera", 10, &ODOM::Position::odom_callback, &pos);
-    ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);
+    ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, &ODOM::Position::odom_callback, &pos);
+    ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
+    //ros::Subscriber odometry_sub = n.subscribe("/vicon/event_camera/event_camera", 10, &ODOM::Position::odom_callback, &pos);
+    //ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);
 
     depth_img_pub = n.advertise<sensor_msgs::Image>("/event/depth_map", 1);
-    ros::Timer timer = n.createTimer(ros::Duration(5), marker);
+    ros::Timer timer = n.createTimer(ros::Duration(10), marker);
 
     //debug calibrations
     ros::Subscriber odometry_hoop_sub = n.subscribe("/vicon/hoop/hoop", 10, &ODOM::Position::hula_hoop_callback, &pos);

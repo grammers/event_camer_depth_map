@@ -8,10 +8,16 @@ namespace GRID{
 
 Voxel::Voxel(ODOM::Position *p, int dimX, int dimY, int dimZ, int FX, int FY, int CX, int CY){
     this->pos = p;
-    this->FX = FX;
-    this->FY = FY;
+    //this->FX = FX;
+    //this->FY = FY;
+    //this->CX = CX;
+    //this->CY = CY;
+    
+    this->FX = 1;
+    this->FY = 1;
     this->CX = CX;
     this->CY = CY;
+    
 
     K << FX, 0, CX,
         0, FY, CY,
@@ -42,6 +48,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     Eigen::Vector3f v_wc = pos->get_current_pos();
     Eigen::Matrix3f r_wc = pos->get_rot();
     //std::cout<<"v_wc: " << v_wc.transpose()<<std::endl;
+    //std::cout<<"r_wc: " << r_wc<<std::endl;
     
     // T ^ -1
     Eigen::Matrix4f t_cw;
@@ -54,7 +61,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     Eigen::Vector3f v_we = e->get_pos();
     Eigen::Matrix3f r_we = e->get_rot();
     //std::cout<<"v_we^t\n"<<v_we.transpose()<<std::endl;
-    //std::cout<<"v_we: " << v_we.transpose()<<std::endl;
+    //std::cout<<"r_we: " << r_we<<std::endl;
 
     // T1 * T2 
     Eigen::Matrix4f t_we;
@@ -85,7 +92,8 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     //std::cout<<"v_c: " << v_c.transpose()<<std::endl;
 
     
-    Eigen::Matrix3f h_z0= r_ce * Z0;
+    Eigen::Matrix3f h_z0= r_ce;
+    h_z0 *= Z0;
     //std::cout<<"h_z0_no v "<<h_z0<<std::endl;
     h_z0.col(2) += v_ec;
 
@@ -108,7 +116,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     //v_c << 0,0,0;
     
     Eigen::Vector4f p;
-    p << e->get_x(), e->get_y(), 1., 0.;
+    p << (float) e->get_x(), (float) e->get_y(), 1., 0.;
     //std::cout<<"p\n"<<p<<std::endl;
 
     p = h_z0_4x4 * p;
@@ -127,7 +135,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
         int y = (int) (p[1] * a + by) / d;
 
         //ROS_INFO("add %i %i %i", x,y,i);
-    int index[3] {x,y,i};
+        int index[3] {x,y,i};
         if(in_bound(index)){
             grid[x + dim[0] * (y + dim[1] * i)] += 1;
             //ROS_INFO("add %i %i %i", x,y,i);
@@ -270,6 +278,8 @@ void Voxel::max_nr_ray(double* direction, int w, int h){
 }
 
 void Voxel::filter(){
+
+    cv::Mat conf(dim[1], dim[0], CV_32FC1);
     //ROS_INFO("filter %i", dim[2]);
     for(int x = 0; x < dim[0]; x++){
         for(int y = 0; y < dim[1]; y++){
@@ -279,17 +289,35 @@ void Voxel::filter(){
             //ROS_INFO("index %i %i %i", x, y, z);
                 int nr = grid[x + dim[0] * (y + dim[1] * z)];
             //ROS_INFO("%i %i %i", x,y,z);
-                if (nr > max && nr > 1){
+                if (nr > max && nr > 0){
                     max = nr;
                     index = z;
                 }
             }
             //ROS_INFO("1");
-            max_dist.at<uchar>(y,x) = (uchar) index;
+            max_dist.at<uchar>(y,x) = (uchar) index * 3;
+            conf.at<float>(y,x) = (float) max;
             //ROS_INFO("2");
         }
 
     }
+/*
+    cv::Mat conf_8;
+    cv::normalize(conf, conf_8, 0.0, 255.0, cv::NORM_MINMAX);
+    conf_8.convertTo(conf_8, CV_8U);
+    cv::Mat mask;
+    cv::adaptiveThreshold(conf_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, 1);
+
+    for (int x = 0; x < dim[0]; x++){
+        for(int y = 0; y < dim[1]; y++){
+            //std::cout<<mask.at<uchar>(y,x)<<std::endl;
+            if(mask.at<int>(y,x) != 0){
+                max_dist.at<uchar>(y,x) = (uchar) 255;
+            }
+        }
+    }
+    */
+
     ROS_INFO("1");
 /*
   // for tuning
@@ -319,6 +347,10 @@ int Voxel::filtered_mark(int w, int h){
 
 void Voxel::depth_map(cv::Mat& img){
     img = max_dist.clone();
+}
+
+void Voxel::npy(){
+    cnpy::npy_save(std::string("dsi.npy"), &grid[0], {(unsigned long int) dim[2], (unsigned long int) dim[1], (unsigned long int) dim[0]}, "w");
 }
 
 } //namespace
