@@ -15,6 +15,9 @@
   <depend>prophesee_event_msgs</depend>
   <depend>dvs_msgs</depend>
   <depend>cnpy_catkin</depend>
+  <depend>image_geometry</depend>
+  <depend>minkindr</depend>
+  <depend>glog_catkin</depend>
 
   <build_depend>roscpp</build_depend>
   <build_depend>geometry_msgs</build_depend>

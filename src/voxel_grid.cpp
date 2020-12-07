@@ -39,6 +39,16 @@ Voxel::Voxel(ODOM::Position *p, int dimX, int dimY, int dimZ, int FX, int FY, in
     max_dist = cv::Mat(dimY, dimX, CV_8U, cv::Scalar(255));
 }
 
+void Voxel::camInit(const sensor_msgs::CameraInfo::ConstPtr& msg){
+//void Voxel::camInit(image_geometry::PinholeCameraModel& cam){
+   //dvs_cam(cam); 
+    dvs_cam.fromCameraInfo(msg);
+    K << dvs_cam.fx(), 0.f, dvs_cam.cx(),
+         0.f, dvs_cam.fy(), dvs_cam.cy(),
+         0.f, 0.f, 1.f;
+    //std::cout<<"cam"<<std::endl;
+}
+
 
 void Voxel::add_ray(EVENTOBJ::EventObj *e){
     
@@ -52,7 +62,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     
     // T ^ -1
     Eigen::Matrix4f t_cw;
-    t_cw << r_wc, v_wc, 0,0,0,1;
+    t_cw << r_wc, v_wc, 0.0,0.0,0.0,1.0;
     t_cw = t_cw.inverse().eval();
     // to world in camera
     //r_wc.transposeInPlace();
@@ -65,7 +75,7 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
 
     // T1 * T2 
     Eigen::Matrix4f t_we;
-    t_we << r_we, v_we, 0,0,0,1;
+    t_we << r_we, v_we, 0.0,0.0,0.0,1.0;
     //std::cout<<"r_wc\n"<<r_wc<<std::endl;
     //std::cout<<"r_we\n"<<r_we<<std::endl;
     //Eigen::Matrix3f r_ce = r_wc * r_we; // r_cw * r_we hear 
@@ -115,24 +125,36 @@ void Voxel::add_ray(EVENTOBJ::EventObj *e){
     //            0,0,0,0;
     //v_c << 0,0,0;
     
+    //Eigen::MatrixXf rect(3,4);
+    //rect << 168.6294097900391, 0.0, 135.348079770296, 0.0,
+            //0.0, 178.5641784667969, 113.6189973794753, 0.0,
+            //0.0, 0.0, 1.0, 0.0;
+    //Eigen::Vector3f p_pre;
     Eigen::Vector4f p;
-    p << (float) e->get_x(), (float) e->get_y(), 1., 0.;
-    //std::cout<<"p\n"<<p<<std::endl;
-
+    //p_pre << (float) e->get_x(), (float) e->get_y(), 1.0;
+    //std::cout<<"p_pre\t"<<p_pre.transpose()<<std::endl;
+    //Eigen::Vector3f p_rect = K.inverse() * p_pre;
+    cv::Point2d xy(e->get_x(), e->get_y());
+    //std::cout<<xy<<std::endl;
+    cv::Point2d rect_point = dvs_cam.rectifyPoint(xy);
+    //std::cout<<rect_point<<std::endl;
+    //std::cout<<"p_rect\t"<<p_rect.transpose()<<std::endl;
+    p << rect_point.x, rect_point.y, 1.0, 0.0;
+    //std::cout<<"p\t"<<p.transpose()<<std::endl;
     p = h_z0_4x4 * p;
     p /= p[2];
     //std::cout<<"p after\n"<<p<<std::endl;
     // prep end //
 
     for(int i = 1; i < dim[2]; i++){
-        const float zi = Z0 + DEPTH * i,
+        const float zi = Z0 + DEPTH * (float) i,
             a = Z0 * (zi - v_c[2]),
-            bx = (Z0 - zi) * (v_c[0] * FX + v_c[2] * CX),
-            by = (Z0 - zi) * (v_c[1] * FY + v_c[2] * CY),
+            bx = (Z0 - zi) * (v_c[0] * dvs_cam.fx()+ v_c[2] * dvs_cam.cx()),
+            by = (Z0 - zi) * (v_c[1] * dvs_cam.fy() + v_c[2] * dvs_cam.cy()),
             d = zi * (Z0 - v_c[2]);
 
-        int x = (int) (p[0] * a + bx) / d;
-        int y = (int) (p[1] * a + by) / d;
+        int x = (int) ((p[0] * a + bx) / d);
+        int y = (int) ((p[1] * a + by) / d);
 
         //ROS_INFO("add %i %i %i", x,y,i);
         int index[3] {x,y,i};
@@ -295,7 +317,7 @@ void Voxel::filter(){
                 }
             }
             //ROS_INFO("1");
-            max_dist.at<uchar>(y,x) = (uchar) index * 3;
+            max_dist.at<uchar>(y,x) = (uchar) index * 2;
             conf.at<float>(y,x) = (float) max;
             //ROS_INFO("2");
         }

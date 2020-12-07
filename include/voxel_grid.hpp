@@ -9,12 +9,14 @@
 #include <Eigen/Dense>
 #include <cnpy.h>
 
+#include <image_geometry/pinhole_camera_model.h>
+
 //for debug
 #include "ros/ros.h"
 #define RESULUTION 33
 #define MAX_DEPTH 176
-#define DEPTH 0.03
-#define Z0 1.0
+#define DEPTH 0.025
+#define Z0 0.5
 
 namespace GRID{
 
@@ -26,6 +28,8 @@ public:
     int nr_ray(int x, int y, int z);
     void clear();
     void filter();
+    void camInit(const sensor_msgs::CameraInfo::ConstPtr& msg);
+    //void camInit(image_geometry::PinholeCameraModel& cam);
 
     int filtered_mark(int x, int y);
     void depth_map(cv::Mat& img);
@@ -59,6 +63,8 @@ private:
     // calibration
     float med;
     int nr;
+
+    image_geometry::PinholeCameraModel dvs_cam;
 
 
 

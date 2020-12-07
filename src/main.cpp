@@ -12,6 +12,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <rviz_visual_tools/rviz_visual_tools.h>
+#include <Eigen/Core>
+#include <geometry_utils.hpp>
 
 //#define FX_IN 500
 //#define FY_IN 500
@@ -34,10 +36,11 @@ ros::Publisher marker_pub;
 ros::Publisher odom;
 ros::Publisher depth_img_pub;
 visualization_msgs::MarkerArray marker_array;
+std::map<ros::Time, geometry_utils::Transformation> poses;
 
 const int DIMX = WIDHT;
 const int DIMY = HEIGHT;
-const int DIMZ = 255/3;
+const int DIMZ = 100;
 
 int width = 350;
 int height = 350;
@@ -87,7 +90,24 @@ void cam_callback(const sensor_msgs::CameraInfo::ConstPtr& msg){
     width = msg->width;
     height = msg->height;
     event.set_camera(FX_IN, FY_IN, width / 2, height / 2);
+    //image_geometry::PinholeCameraModel cam;
+    //cam.fromCameraInfo(msg);
+    grid.camInit(msg);
+
     got_cam = true;
+    return;
+}
+
+void trajectory_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    const Eigen::Vector3d position(msg->pose.position.x,
+                                    msg->pose.position.y,
+                                    msg->pose.position.z);
+    const Eigen::Quaterniond quat(msg->pose.orientation.w,
+                                msg->pose.orientation.x,
+                                msg->pose.orientation.y,
+                                msg->pose.orientation.z);
+    geometry_utils::Transformation T(position, quat);
+    poses.insert(std::pair<ros::Time, geometry_utils::Transformation>(ros::Time(msg->header.stamp.toSec()), T));
     return;
 }
 
@@ -97,13 +117,14 @@ int main(int argc, char **argv){
     ros::NodeHandle n;
     
     event.set_camera(FX_IN, FY_IN, CX, CY);
-    //ros::Subscriber camera_info_sub = n.subscribe("/dvs/camera_info", 1, cam_callback);
+    ros::Subscriber camera_info_sub = n.subscribe("/dvs/camera_info", 1, cam_callback);
     //ros::Subscriber camera_info_sub = n.subscribe("/prophesee/camera/camera_info", 1, cam_callback);
     //while(!got_cam){
     //    ros::spinOnce();
     //}
 
-    ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, &ODOM::Position::odom_callback, &pos);
+    //ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, &ODOM::Position::odom_callback, &pos);
+    ros::Subscriber odometry_sub = n.subscribe("/optitrack/davis", 10, trajectory_callback);
     ros::Subscriber event_sub = n.subscribe("/dvs/events", 10, &EVENT::Event::event_callback, &event);
     //ros::Subscriber odometry_sub = n.subscribe("/vicon/event_camera/event_camera", 10, &ODOM::Position::odom_callback, &pos);
     //ros::Subscriber event_sub = n.subscribe("/prophesee/camera/cd_events_buffer", 10, &EVENT::Event::event_callback, &event);

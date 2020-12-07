@@ -12,6 +12,8 @@ set(HEADERS
     include/voxel_grid.hpp
     include/quaternion.hpp
     include/median_filter.hpp
+    include/trajectory.hpp
+    include/geometry_utils.hpp
 )
 
 set(SOURCES
