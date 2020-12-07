@@ -55,7 +55,8 @@ void Event::dropout(){
     }
 }
 
-void Event::add_ray(){
+//void Event::add_ray(){
+void Event::add_ray(LinearTrajectory *trajectory, geometry_utils::Transformation *T_cw){
     //std::for_each(event_obj.begin(), event_obj.end(), [=](EVENTOBJ::EventObj e) {grid->add_ray(e);});
     //dropout();
     int stop = event_obj.size();
@@ -63,7 +64,8 @@ void Event::add_ray(){
     for(int i = 0; i < stop; i++){
         //EVENTOBJ::EventObj e = event_obj.at(i);
         //std::cout<<"event add ray "<<event_obj.at(i).get_x()<<std::endl;
-        grid->add_ray(&event_obj.at(i));
+        //grid->add_ray(&event_obj.at(i));
+        grid->add_ray_traj(&event_obj.at(i), trajectory, T_cw);
     }
     event_obj.clear();
 }

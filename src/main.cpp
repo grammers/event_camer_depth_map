@@ -14,6 +14,7 @@
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <Eigen/Core>
 #include <geometry_utils.hpp>
+#include <trajectory.hpp>
 
 //#define FX_IN 500
 //#define FY_IN 500
@@ -66,7 +67,19 @@ void depth_map(int w, int h, cv::Mat img, double* pos){
 }
 
 void marker(const ros::TimerEvent&){
-    event.add_ray();
+    LinearTrajectory trajectory = LinearTrajectory(poses);
+    geometry_utils::Transformation T0, T1;
+    ros::Time t0, t1;
+    trajectory.getFirstControlPose(&T0, &t0);
+    trajectory.getLastControlPose(&T1, &t1);
+    geometry_utils::Transformation T_wc;
+    trajectory.getPoseAt(ros::Time(0.5 * (t0.toSec() + t1.toSec())), T_wc);
+    geometry_utils::Transformation T_cw = T_wc.inverse();
+
+    std::cout<<"T_cw\n"<<T_cw<<std::endl;
+
+
+    event.add_ray(&trajectory, &T_cw);
     grid.filter();
     cv::Mat img(HEIGHT, WIDHT, CV_8UC1, cv::Scalar(55));
     grid.depth_map(img);
@@ -110,6 +123,8 @@ void trajectory_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     poses.insert(std::pair<ros::Time, geometry_utils::Transformation>(ros::Time(msg->header.stamp.toSec()), T));
     return;
 }
+
+
 
 int main(int argc, char **argv){
     

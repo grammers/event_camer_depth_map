@@ -10,6 +10,8 @@
 #include <cnpy.h>
 
 #include <image_geometry/pinhole_camera_model.h>
+#include <geometry_utils.hpp>
+#include <trajectory.hpp>
 
 //for debug
 #include "ros/ros.h"
@@ -25,6 +27,7 @@ public:
     Voxel(ODOM::Position *p, int dimX, int dimY, int dimZ, int FX, int FY, int CX, int CY);
 
     void add_ray(EVENTOBJ::EventObj *e);
+    void add_ray_traj(EVENTOBJ::EventObj *e, LinearTrajectory *trajectory, geometry_utils::Transformation *T_cw);
     int nr_ray(int x, int y, int z);
     void clear();
     void filter();

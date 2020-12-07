@@ -27,6 +27,10 @@ float EventObj::get_y(){
 double EventObj::get_ts(){
     return event.ts.toSec();
 }
+ros::Time EventObj::get_ros_ts(){
+    return event.ts;
+}
+
 
 Eigen::Vector3f EventObj::get_pos(){
     //Eigen::Vector3f test = this->pos->get_current_pos();

@@ -2,7 +2,7 @@
 
 #include <map>
 #include <ros/time.h>
-#include <mapper_emvs/geometry_utils.hpp>
+#include <geometry_utils.hpp>
 
 template<class DerivedTrajectory>
 class Trajectory

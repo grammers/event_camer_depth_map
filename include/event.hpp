@@ -6,6 +6,8 @@
 #include <dvs_msgs/EventArray.h>
 //#include <prophesee_event_msgs/EventArray.h>
 #include <vector>
+#include <geometry_utils.hpp>
+#include <trajectory.hpp>
 
 #define TS 0.1
 
@@ -17,7 +19,8 @@ public:
     void event_callback(const dvs_msgs::EventArray::ConstPtr& msg);
     //void event_callback(const prophesee_event_msgs::EventArray::ConstPtr& msg);
     void set_camera(double fx, double fy, double cx, double cy);
-    void add_ray();
+    //void add_ray();
+    void add_ray(LinearTrajectory *trajectory, geometry_utils::Transformation *T_cw);
     double get_f();
     double get_fx();
     double get_fy();

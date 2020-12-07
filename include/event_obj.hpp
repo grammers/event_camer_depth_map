@@ -11,6 +11,7 @@ public:
     //EventObj(prophesee_event_msgs::Event e, ODOM::Position *pos);
 
     double get_ts();
+    ros::Time get_ros_ts();
     float get_x();
     float get_y();
     Eigen::Vector3f get_pos();
