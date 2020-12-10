@@ -6,22 +6,18 @@ find_package(catkin_simple REQUIRED)
 catkin_simple()
 
 set(HEADERS
-    include/position.hpp
     include/event.hpp
     include/event_obj.hpp
     include/voxel_grid.hpp
-    include/quaternion.hpp
     include/median_filter.hpp
     include/trajectory.hpp
     include/geometry_utils.hpp
 )
 
 set(SOURCES
-    src/position.cpp
     src/event.cpp
     src/event_obj.cpp
     src/voxel_grid.cpp
-    src/quaternion.cpp
     src/median_filter.cpp
 )
 
