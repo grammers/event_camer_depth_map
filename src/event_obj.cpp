@@ -2,8 +2,8 @@
 
 namespace EVENTOBJ{
 
-EventObj::EventObj(dvs_msgs::Event e, ODOM::Position *pos) {
-//EventObj::EventObj(prophesee_event_msgs::Event e, ODOM::Position *pos) {
+//EventObj::EventObj(dvs_msgs::Event e, ODOM::Position *pos) {
+EventObj::EventObj(prophesee_event_msgs::Event e, ODOM::Position *pos) {
     event = e;
     v_pos = pos->get_pos_at(get_ts());
     r_pos = pos->get_rot_at(get_ts());

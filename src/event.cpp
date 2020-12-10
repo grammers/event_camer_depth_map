@@ -7,12 +7,12 @@ Event::Event(GRID::Voxel *grid, ODOM::Position *pos) {
     this->grid = grid;
 }
 
-void Event::event_callback(const dvs_msgs::EventArray::ConstPtr& msg){
-//void Event::event_callback(const prophesee_event_msgs::EventArray::ConstPtr& msg){
+//void Event::event_callback(const dvs_msgs::EventArray::ConstPtr& msg){
+void Event::event_callback(const prophesee_event_msgs::EventArray::ConstPtr& msg){
     int size = msg->events.size();
     for (int i = 0;  i < size; i++){
-        //const prophesee_event_msgs::Event& e = msg->events[i];
-        const dvs_msgs::Event& e = msg->events[i];
+        const prophesee_event_msgs::Event& e = msg->events[i];
+        //const dvs_msgs::Event& e = msg->events[i];
         //ODOM::Position e_pos(*pos);
         EVENTOBJ::EventObj eo(e, pos);
         event_obj.push_back(eo);

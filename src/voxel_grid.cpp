@@ -13,8 +13,8 @@ Voxel::Voxel(ODOM::Position *p, int dimX, int dimY, int dimZ, int FX, int FY, in
     //this->CX = CX;
     //this->CY = CY;
     
-    this->FX = 1;
-    this->FY = 1;
+    this->FX = FX;
+    this->FY = FY;
     this->CX = CX;
     this->CY = CY;
     
@@ -39,14 +39,16 @@ Voxel::Voxel(ODOM::Position *p, int dimX, int dimY, int dimZ, int FX, int FY, in
     max_dist = cv::Mat(dimY, dimX, CV_8U, cv::Scalar(255));
 }
 
-void Voxel::camInit(const sensor_msgs::CameraInfo::ConstPtr& msg){
-//void Voxel::camInit(image_geometry::PinholeCameraModel& cam){
-   //dvs_cam(cam); 
-    dvs_cam.fromCameraInfo(msg);
+void Voxel::camInit(const sensor_msgs::CameraInfo *msg){
+    dvs_cam.fromCameraInfo(*msg);
     K << dvs_cam.fx(), 0.f, dvs_cam.cx(),
          0.f, dvs_cam.fy(), dvs_cam.cy(),
          0.f, 0.f, 1.f;
-    //std::cout<<"cam"<<std::endl;
+
+    FX = dvs_cam.fx();
+    FY = dvs_cam.fy();
+    CX = dvs_cam.cx();
+    CY = dvs_cam.cy();
 }
 
 void Voxel::add_ray_traj(EVENTOBJ::EventObj *e, LinearTrajectory *trajectory, geometry_utils::Transformation *T_cw){
@@ -97,7 +99,7 @@ void Voxel::add_ray_traj(EVENTOBJ::EventObj *e, LinearTrajectory *trajectory, ge
 
         int index[3] {x,y,i};
         if(in_bound(index)){
-            grid[x + dim[0] * (y + dim[1] * i)] += 1;
+            grid[x + dim[0] * (y + dim[1] * (dim[2] - i))] += 1;
         }
     }
 }
@@ -353,6 +355,7 @@ void Voxel::max_nr_ray(double* direction, int w, int h){
 
 void Voxel::filter(){
 
+    cv::Mat filter = cv::Mat(dim[1], dim[0], CV_8U, cv::Scalar(255));
     cv::Mat conf(dim[1], dim[0], CV_32FC1);
     //ROS_INFO("filter %i", dim[2]);
     for(int x = 0; x < dim[0]; x++){
@@ -363,13 +366,13 @@ void Voxel::filter(){
             //ROS_INFO("index %i %i %i", x, y, z);
                 int nr = grid[x + dim[0] * (y + dim[1] * z)];
             //ROS_INFO("%i %i %i", x,y,z);
-                if (nr > max && nr > 0){
+                if (nr > max){
                     max = nr;
                     index = z;
                 }
             }
             //ROS_INFO("1");
-            max_dist.at<uchar>(y,x) = (uchar) index * 2;
+            filter.at<uchar>(y,x) = (uchar) dim[2] - index;
             conf.at<float>(y,x) = (float) max;
             //ROS_INFO("2");
         }
@@ -379,20 +382,18 @@ void Voxel::filter(){
     cv::normalize(conf, conf_8, 0.0, 255.0, cv::NORM_MINMAX);
     conf_8.convertTo(conf_8, CV_8U);
     cv::Mat mask;
-    cv::adaptiveThreshold(conf_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, -5.0);
+    cv::adaptiveThreshold(conf_8, mask, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 5, -4.0);
 
-    cv::Mat filter;
     MEDFIL::MedianFilter m;
-    m.median(max_dist, filter, mask, 5);
+    m.median(filter, max_dist, mask, 5);
+
     for (int x = 0; x < dim[0]; x++){
         for(int y = 0; y < dim[1]; y++){
-            max_dist.at<uchar>(y,x) = (uchar) filter.at<uchar>(y,x);
-            //std::cout<<mask.at<uchar>(y,x)<<std::endl;
-            //if(filter.at<int>(y,x) == 0){
-            //    max_dist.at<uchar>(y,x) = (uchar) 255;
-            //}
+            if (max_dist.at<uchar>(y,x) == 0)
+                max_dist.at<uchar>(y,x) = (uchar) 255;
         }
     }
+    
 
     ROS_INFO("1");
 /*
@@ -422,7 +423,8 @@ int Voxel::filtered_mark(int w, int h){
 }
 
 void Voxel::depth_map(cv::Mat& img){
-    img = max_dist.clone();
+    cv::Mat dm = (max_dist) * (255 / (dim[2]));
+    img = dm.clone();
 }
 
 void Voxel::npy(){

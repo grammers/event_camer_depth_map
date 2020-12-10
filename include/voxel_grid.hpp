@@ -17,8 +17,8 @@
 #include "ros/ros.h"
 #define RESULUTION 33
 #define MAX_DEPTH 176
-#define DEPTH 0.025
-#define Z0 0.5
+#define DEPTH 0.05
+#define Z0 0.4
 
 namespace GRID{
 
@@ -31,7 +31,7 @@ public:
     int nr_ray(int x, int y, int z);
     void clear();
     void filter();
-    void camInit(const sensor_msgs::CameraInfo::ConstPtr& msg);
+    void camInit(const sensor_msgs::CameraInfo *msg);
     //void camInit(image_geometry::PinholeCameraModel& cam);
 
     int filtered_mark(int x, int y);
